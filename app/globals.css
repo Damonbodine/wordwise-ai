@@ -1,0 +1,264 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Import ProseMirror base styles */
+@import 'prosemirror-view/style/prosemirror.css';
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 240 10% 3.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 240 10% 3.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 240 10% 3.9%;
+    --primary: 240 5.9% 10%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 240 4.8% 95.9%;
+    --secondary-foreground: 240 5.9% 10%;
+    --muted: 240 4.8% 95.9%;
+    --muted-foreground: 240 3.8% 46.1%;
+    --accent: 240 4.8% 95.9%;
+    --accent-foreground: 240 5.9% 10%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 5.9% 90%;
+    --input: 240 5.9% 90%;
+    --ring: 240 5.9% 10%;
+    --chart-1: 12 76% 61%;
+    --chart-2: 173 58% 39%;
+    --chart-3: 197 37% 24%;
+    --chart-4: 43 74% 66%;
+    --chart-5: 27 87% 67%;
+    --radius: 0.5rem;
+  }
+
+  .dark {
+    --background: 240 10% 3.9%;
+    --foreground: 0 0% 98%;
+    --card: 240 10% 3.9%;
+    --card-foreground: 0 0% 98%;
+    --popover: 240 10% 3.9%;
+    --popover-foreground: 0 0% 98%;
+    --primary: 0 0% 98%;
+    --primary-foreground: 240 5.9% 10%;
+    --secondary: 240 3.7% 15.9%;
+    --secondary-foreground: 0 0% 98%;
+    --muted: 240 3.7% 15.9%;
+    --muted-foreground: 240 5% 64.9%;
+    --accent: 240 3.7% 15.9%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 62.8% 30.6%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 240 3.7% 15.9%;
+    --input: 240 3.7% 15.9%;
+    --ring: 240 4.9% 83.9%;
+    --chart-1: 220 70% 50%;
+    --chart-2: 160 60% 45%;
+    --chart-3: 30 80% 55%;
+    --chart-4: 280 65% 60%;
+    --chart-5: 340 75% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  
+  /* Override Tailwind's list reset specifically for TipTap editor */
+  .ProseMirror ul,
+  .ProseMirror ol {
+    list-style: revert;
+    margin: revert;
+    padding: revert;
+  }
+  
+  .ProseMirror li {
+    display: list-item;
+  }
+}
+
+/* TipTap Editor Styles - Using higher specificity and utilities layer */
+@layer utilities {
+  /* Editor container styling */
+  .ProseMirror {
+    outline: none !important;
+    @apply text-foreground;
+  }
+
+  /* Placeholder styling */
+  .ProseMirror p.is-editor-empty:first-child::before {
+    color: hsl(var(--muted-foreground)) !important;
+    content: attr(data-placeholder);
+    float: left;
+    height: 0;
+    pointer-events: none;
+  }
+
+  /* Heading styles with increased specificity */
+  .ProseMirror h1,
+  .ProseMirror h2,
+  .ProseMirror h3,
+  .ProseMirror h4,
+  .ProseMirror h5,
+  .ProseMirror h6 {
+    @apply font-bold text-foreground !important;
+    line-height: 1.3 !important;
+    margin-top: 1.5em !important;
+    margin-bottom: 0.5em !important;
+  }
+
+  .ProseMirror h1 {
+    @apply text-3xl !important;
+    margin-top: 2em !important;
+    font-weight: 700 !important;
+  }
+
+  .ProseMirror h2 {
+    @apply text-2xl !important;
+    margin-top: 1.75em !important;
+    font-weight: 600 !important;
+  }
+
+  .ProseMirror h3 {
+    @apply text-xl !important;
+    margin-top: 1.5em !important;
+    font-weight: 600 !important;
+  }
+
+  .ProseMirror h4 {
+    @apply text-lg !important;
+    font-weight: 600 !important;
+  }
+
+  .ProseMirror h5 {
+    @apply text-base !important;
+    font-weight: 600 !important;
+  }
+
+  .ProseMirror h6 {
+    @apply text-sm !important;
+    font-weight: 600 !important;
+  }
+
+  /* List styles - Override Tailwind resets */
+  .ProseMirror ul,
+  .ProseMirror ol {
+    padding-left: 1.5rem !important;
+    margin: 1rem 0 !important;
+    @apply text-foreground !important;
+    list-style: revert !important; /* Override Tailwind's list-style: none */
+  }
+
+  .ProseMirror li {
+    margin: 0.25rem 0 !important;
+    @apply text-foreground !important;
+    display: list-item !important; /* Ensure list items display properly */
+  }
+
+  .ProseMirror ul {
+    list-style-type: disc !important;
+  }
+
+  .ProseMirror ul li {
+    list-style-type: disc !important;
+  }
+
+  .ProseMirror ol {
+    list-style-type: decimal !important;
+  }
+
+  .ProseMirror ol li {
+    list-style-type: decimal !important;
+  }
+
+  /* Blockquote styles */
+  .ProseMirror blockquote {
+    @apply border-l-4 border-primary bg-muted/50 pl-4 pr-4 py-2 italic rounded-r !important;
+    margin: 1rem 0 !important;
+    font-style: italic !important;
+  }
+
+  .ProseMirror code {
+    @apply bg-muted text-muted-foreground px-1 py-0.5 rounded text-sm;
+  }
+
+  .ProseMirror pre {
+    @apply bg-muted p-4 rounded overflow-x-auto;
+    margin: 1rem 0;
+  }
+
+  .ProseMirror pre code {
+    @apply bg-transparent p-0;
+  }
+
+  .ProseMirror p {
+    margin: 0.75rem 0;
+    @apply text-foreground leading-relaxed;
+  }
+
+  .ProseMirror p:first-child {
+    margin-top: 0;
+  }
+
+  .ProseMirror p:last-child {
+    margin-bottom: 0;
+  }
+
+  .ProseMirror strong {
+    font-weight: 600;
+  }
+
+  .ProseMirror em {
+    font-style: italic;
+  }
+
+  .ProseMirror a {
+    @apply text-primary underline;
+  }
+
+  .ProseMirror hr {
+    @apply border-border my-4;
+  }
+
+  /* Focus styles */
+  .ProseMirror:focus {
+    outline: none;
+  }
+
+  /* Selection styles */
+  .ProseMirror ::selection {
+    @apply bg-primary/20;
+  }
+
+  /* Collaborative cursor styles (for future use) */
+  .collaboration-cursor__caret {
+    @apply border-l-2 border-black;
+    border-color: var(--user-color);
+    margin-left: -1px;
+    margin-right: -1px;
+    pointer-events: none;
+    position: relative;
+    word-break: normal;
+  }
+
+  .collaboration-cursor__label {
+    @apply text-white text-xs font-medium px-1 py-0.5 rounded;
+    background-color: var(--user-color);
+    border-radius: 3px 3px 3px 0;
+    font-style: normal;
+    font-weight: 600;
+    left: -1px;
+    line-height: normal;
+    pointer-events: none;
+    position: absolute;
+    top: -1.4em;
+    user-select: none;
+    white-space: nowrap;
+  }
+} 
