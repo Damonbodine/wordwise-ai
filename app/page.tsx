@@ -3,6 +3,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { TextEditor } from '@/components/editor/text-editor'
+import { DocumentHeader } from '@/components/editor/document-header'
 
 export default function Home() {
   return (
@@ -21,20 +22,8 @@ export default function Home() {
 
         {/* Text Editor Section */}
         <Card className="border-border/50 bg-card/80 backdrop-blur-sm">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <div className="h-8 w-8 rounded-lg bg-primary/10 flex items-center justify-center">
-                <svg className="h-4 w-4 text-primary" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                </svg>
-              </div>
-              Rich Text Editor
-            </CardTitle>
-            <CardDescription>
-              Try our advanced TipTap editor with real-time word count, character tracking, and intelligent formatting
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
+          <DocumentHeader />
+          <CardContent className="p-0">
             <TextEditor 
               placeholder="Start writing your masterpiece here..." 
               className="w-full"
