@@ -11,6 +11,7 @@ import {
   TargetAudience,
   ToneAnalysis 
 } from '@/types';
+import { supabaseDocumentService } from '@/services/supabase-document-service';
 
 // =============================================================================
 // DOCUMENT STORE INTERFACE
@@ -22,18 +23,23 @@ interface DocumentStore {
   activeDocumentId: string | null;
   isLoading: boolean;
   error: string | null;
+  isInitialized: boolean;
 
   // Computed getters
   activeDocument: Document | null;
   documentCount: number;
   totalWordCount: number;
 
-  // Actions
-  createDocument: (title?: string, content?: string) => Document;
-  updateDocument: (id: string, updates: Partial<Document>) => void;
-  deleteDocument: (id: string) => void;
+  // Database Actions (async)
+  loadUserDocuments: (userId: string) => Promise<void>;
+  createDocument: (title?: string, content?: string, userId?: string) => Promise<Document>;
+  updateDocument: (id: string, updates: Partial<Document>, userId?: string) => Promise<void>;
+  deleteDocument: (id: string, userId?: string) => Promise<void>;
+  
+  // Local Actions (sync)
   setActiveDocument: (id: string | null) => void;
-  duplicateDocument: (id: string) => Document | null;
+  duplicateDocument: (id: string, userId?: string) => Promise<Document | null>;
+  clearDocuments: () => void;
   
   // Content management
   updateDocumentContent: (id: string, content: string, plainText: string) => void;
@@ -203,11 +209,12 @@ const initialDocuments: Document[] = [
 export const useDocumentStore = create<DocumentStore>()(
   devtools(
     (set, get) => ({
-      // Initial state
-      documents: initialDocuments,
-      activeDocumentId: initialDocuments[0]?.id || null,
+      // Initial state - start empty, will load from database
+      documents: [],
+      activeDocumentId: null,
       isLoading: false,
       error: null,
+      isInitialized: false,
 
       // Computed getters
       get activeDocument() {
@@ -225,64 +232,128 @@ export const useDocumentStore = create<DocumentStore>()(
           .reduce((total, doc) => total + doc.stats.wordCount, 0);
       },
 
-      // CRUD Actions
-      createDocument: (title = 'Untitled Document', content = '') => {
-        const id = generateId();
-        const plainText = content.replace(/<[^>]*>/g, '');
-        const now = new Date();
-        
-        const newDocument: Document = {
-          id,
-          title,
-          content,
-          plainText,
-          createdAt: now,
-          updatedAt: now,
-          userId: 'user-1', // TODO: Get from auth context
-          stats: calculateStats(content, plainText),
-          analysis: createDefaultAnalysis(),
-          settings: createDefaultSettings(),
-          sharing: createDefaultSharing(),
-          status: 'draft',
-          tags: [],
-          version: 1,
-          isArchived: false,
-          isFavorite: false,
-        };
-
-        set((state) => {
-          console.log('🏪 Document Store: Creating document', {
-            newDocId: id,
-            newDocTitle: title,
-            previousActiveId: state.activeDocumentId,
-            totalDocs: state.documents.length + 1
+      // Database Actions
+      loadUserDocuments: async (userId: string) => {
+        try {
+          set({ isLoading: true, error: null });
+          console.log('[DOC STORE] Loading documents for user:', userId);
+          
+          const documents = await supabaseDocumentService.getUserDocuments(userId);
+          
+          set({ 
+            documents, 
+            isLoading: false, 
+            isInitialized: true,
+            activeDocumentId: documents.length > 0 ? documents[0].id : null
           });
           
-          return {
+          console.log('[DOC STORE] Loaded documents:', documents.length);
+        } catch (error) {
+          console.error('[DOC STORE] Failed to load documents:', error);
+          set({ 
+            isLoading: false, 
+            error: error instanceof Error ? error.message : 'Failed to load documents' 
+          });
+        }
+      },
+
+      createDocument: async (title = 'Untitled Document', content = '', userId) => {
+        if (!userId) {
+          throw new Error('User ID is required to create document');
+        }
+
+        try {
+          set({ isLoading: true, error: null });
+          console.log('[DOC STORE] Creating document:', { title, userId });
+          
+          const plainText = content.replace(/<[^>]*>/g, '');
+          const newDocument = await supabaseDocumentService.createDocument(
+            title, 
+            content, 
+            plainText, 
+            userId
+          );
+
+          // Add to local state
+          set((state) => ({
             documents: [newDocument, ...state.documents],
-            activeDocumentId: id,
-          };
+            activeDocumentId: newDocument.id,
+            isLoading: false,
+          }));
+
+          console.log('[DOC STORE] Document created successfully:', newDocument.id);
+          return newDocument;
+        } catch (error) {
+          console.error('[DOC STORE] Failed to create document:', error);
+          set({ 
+            isLoading: false, 
+            error: error instanceof Error ? error.message : 'Failed to create document' 
+          });
+          throw error;
+        }
+      },
+
+      updateDocument: async (id, updates, userId) => {
+        if (!userId) {
+          throw new Error('User ID is required to update document');
+        }
+
+        try {
+          console.log('[DOC STORE] Updating document:', { id, userId });
+          
+          // Update in database
+          const updatedDocument = await supabaseDocumentService.updateDocument(id, updates, userId);
+          
+          // Update local state
+          set((state) => ({
+            documents: state.documents.map(doc =>
+              doc.id === id ? updatedDocument : doc
+            ),
+          }));
+
+          console.log('[DOC STORE] Document updated successfully:', id);
+        } catch (error) {
+          console.error('[DOC STORE] Failed to update document:', error);
+          set({ error: error instanceof Error ? error.message : 'Failed to update document' });
+          throw error;
+        }
+      },
+
+      deleteDocument: async (id, userId) => {
+        if (!userId) {
+          throw new Error('User ID is required to delete document');
+        }
+
+        try {
+          console.log('[DOC STORE] Deleting document:', { id, userId });
+          
+          // Delete from database
+          await supabaseDocumentService.deleteDocument(id, userId);
+          
+          // Update local state
+          set((state) => ({
+            documents: state.documents.filter(doc => doc.id !== id),
+            activeDocumentId: state.activeDocumentId === id ? 
+              (state.documents.find(doc => doc.id !== id)?.id || null) : 
+              state.activeDocumentId,
+          }));
+
+          console.log('[DOC STORE] Document deleted successfully:', id);
+        } catch (error) {
+          console.error('[DOC STORE] Failed to delete document:', error);
+          set({ error: error instanceof Error ? error.message : 'Failed to delete document' });
+          throw error;
+        }
+      },
+
+      clearDocuments: () => {
+        set({ 
+          documents: [], 
+          activeDocumentId: null, 
+          isInitialized: false,
+          error: null 
         });
-
-        console.log('✅ Document created successfully:', { id, title });
-        return newDocument;
-      },
-
-      updateDocument: (id, updates) => {
-        set((state) => ({
-          documents: state.documents.map(doc =>
-            doc.id === id
-              ? { ...doc, ...updates, updatedAt: new Date(), version: doc.version + 1 }
-              : doc
-          ),
-        }));
-      },
-
-      deleteDocument: (id) => {
-        set((state) => ({
-          documents: state.documents.filter(doc => doc.id !== id),
-          activeDocumentId: state.activeDocumentId === id ? null : state.activeDocumentId,
-        }));
+        console.log('[DOC STORE] Documents cleared');
       },
 
       setActiveDocument: (id) => {
@@ -316,29 +387,39 @@ export const useDocumentStore = create<DocumentStore>()(
         });
       },
 
-      duplicateDocument: (id) => {
-        const { documents } = get();
-        const original = documents.find(doc => doc.id === id);
-        if (!original) return null;
+      duplicateDocument: async (id, userId) => {
+        if (!userId) {
+          throw new Error('User ID is required to duplicate document');
+        }
 
-        const newId = generateId();
-        const now = new Date();
-        const duplicated: Document = {
-          ...original,
-          id: newId,
-          title: `${original.title} (Copy)`,
-          createdAt: now,
-          updatedAt: now,
-          version: 1,
-          isFavorite: false,
-        };
+        try {
+          const { documents } = get();
+          const original = documents.find(doc => doc.id === id);
+          if (!original) return null;
 
-        set((state) => ({
-          documents: [duplicated, ...state.documents],
-          activeDocumentId: newId,
-        }));
+          console.log('[DOC STORE] Duplicating document:', { id, userId });
+          
+          // Create new document in database
+          const duplicated = await supabaseDocumentService.createDocument(
+            `${original.title} (Copy)`,
+            original.content,
+            original.plainText,
+            userId
+          );
 
-        return duplicated;
+          // Add to local state
+          set((state) => ({
+            documents: [duplicated, ...state.documents],
+            activeDocumentId: duplicated.id,
+          }));
+
+          console.log('[DOC STORE] Document duplicated successfully:', duplicated.id);
+          return duplicated;
+        } catch (error) {
+          console.error('[DOC STORE] Failed to duplicate document:', error);
+          set({ error: error instanceof Error ? error.message : 'Failed to duplicate document' });
+          throw error;
+        }
       },
 
       // Content management
@@ -361,7 +442,15 @@ export const useDocumentStore = create<DocumentStore>()(
       },
 
       updateDocumentTitle: (id, title) => {
-        get().updateDocument(id, { title });
+        // Update locally for immediate UI response
+        set((state) => ({
+          documents: state.documents.map(doc =>
+            doc.id === id
+              ? { ...doc, title, updatedAt: new Date() }
+              : doc
+          ),
+        }));
+        // Note: Database sync should be handled by auto-save or explicit save
       },
 
       updateDocumentSettings: (id, settings) => {
