@@ -64,6 +64,10 @@ export function TextEditor({
 
   // Add a local state to force re-renders when document changes
   const [documentChangeCounter, setDocumentChangeCounter] = React.useState(0);
+  
+  // Track if editor is initializing to prevent auto-save during setup
+  const [isInitializing, setIsInitializing] = React.useState(true);
+  const hasInitializedRef = React.useRef(false);
 
   // Subscribe to store changes for activeDocumentId
   React.useEffect(() => {
@@ -144,6 +148,12 @@ export function TextEditor({
         setEditorContent(content, activeDocument.plainText || '');
         console.log(`📝 Editor initialized with document: "${activeDocument.title}"`);
       }
+      
+      // Mark initialization complete after a short delay
+      setTimeout(() => {
+        setIsInitializing(false);
+        hasInitializedRef.current = true;
+      }, 100);
     },
     onUpdate: ({ editor }) => {
       const html = editor.getHTML();
@@ -152,8 +162,10 @@ export function TextEditor({
       // Update editor store immediately (real-time) - this calculates all stats
       setEditorContent(html, text);
       
-      // Trigger auto-save with 2-second debounce
-      autoSave.triggerAutoSave(html, text);
+      // Only trigger auto-save if not initializing and content has actually changed
+      if (!isInitializing && hasInitializedRef.current) {
+        autoSave.triggerAutoSave(html, text);
+      }
     },
     onFocus: () => {
       setEditorFocus(true);
@@ -198,19 +210,31 @@ export function TextEditor({
       
       // Always update content - no comparison check to ensure it loads
       try {
+        // Reset initialization flag when switching documents
+        setIsInitializing(true);
+        hasInitializedRef.current = false;
+        
         editor.commands.setContent(documentContent);
         setEditorContent(documentContent, currentActiveDocument.plainText || '');
         console.log(`✅ Successfully loaded document: "${currentActiveDocument.title}"`);
+        
+        // Mark as initialized after content is set
+        setTimeout(() => {
+          setIsInitializing(false);
+          hasInitializedRef.current = true;
+        }, 100);
         
         // Focus editor for empty documents
         if (documentContent === '<p></p>' || documentContent === '') {
           setTimeout(() => {
             editor.commands.focus();
             console.log('🎯 Focused editor for empty document');
-          }, 100);
+          }, 200);
         }
       } catch (error) {
         console.error('❌ Failed to load document content:', error);
+        setIsInitializing(false);
+        hasInitializedRef.current = true;
       }
     } else if (storeState.activeDocumentId) {
       console.warn('⚠️ Active document ID set but document not found:', storeState.activeDocumentId);

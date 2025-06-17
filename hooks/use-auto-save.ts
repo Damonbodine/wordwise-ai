@@ -200,6 +200,7 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
     // Clear existing timeout
     if (timeoutRef.current) {
       clearTimeout(timeoutRef.current);
+      console.log('🚫 Cancelled pending auto-save');
     }
 
     // Mark as unsaved immediately
