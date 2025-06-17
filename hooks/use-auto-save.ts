@@ -107,7 +107,11 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
     if (!isMountedRef.current) return;
 
     try {
-      console.log(`💾 Auto-save attempt ${retryCount + 1} for document: ${documentId}`);
+      console.log(`💾 Auto-save attempt ${retryCount + 1} for document: ${documentId}`, {
+        contentLength: content.length,
+        plainTextLength: plainText.length,
+        contentPreview: content.slice(0, 100)
+      });
       
       // Update stores to indicate saving is in progress
       setAutoSaving(true);
@@ -186,12 +190,23 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
 
   // Debounced save trigger
   const triggerAutoSave = useCallback((content: string, plainText: string) => {
+    console.log('🔍 triggerAutoSave called:', {
+      enabled,
+      activeDocumentId,
+      isMounted: isMountedRef.current,
+      contentLength: content.length,
+      lastContentLength: lastContentRef.current?.length,
+      contentChanged: content !== lastContentRef.current
+    });
+
     if (!enabled || !activeDocumentId || !isMountedRef.current) {
+      console.log('❌ Auto-save skipped: prerequisites not met');
       return;
     }
 
     // Skip if content hasn't actually changed
     if (content === lastContentRef.current) {
+      console.log('⏭️ Auto-save skipped: content unchanged');
       return;
     }
 
