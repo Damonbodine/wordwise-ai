@@ -9,7 +9,7 @@ import { GrammarAnalysisResult, GrammarIssue, DocumentScores } from './groq-gram
 // Re-export types for other modules
 export type { GrammarAnalysisResult, GrammarIssue, DocumentScores };
 
-const GROQ_API_KEY = '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'; // Direct API key
+const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '';
 
 export class GroqTestService {
   private analysisCache: Map<string, GrammarAnalysisResult> = new Map();
@@ -50,42 +50,7 @@ export class GroqTestService {
     console.log('[GROQ TEST] Starting analysis for text:', text.substring(0, 50) + '...');
     console.log('[GROQ TEST] API Key present:', !!GROQ_API_KEY, 'Length:', GROQ_API_KEY.length);
 
-    const systemPrompt = `You are an advanced grammar and writing assistant. Analyze the given text for grammar, spelling, style, clarity, engagement, and delivery issues. 
-
-Return a JSON response with the following structure:
-{
-  "issues": [
-    {
-      "type": "spelling|grammar|style|clarity|engagement|delivery",
-      "category": "Specific category name",
-      "severity": "low|medium|high",
-      "message": "Brief description of the issue",
-      "explanation": "Detailed explanation of why this is an issue",
-      "originalText": "The problematic text",
-      "suggestedText": "The corrected text",
-      "startIndex": number,
-      "endIndex": number,
-      "confidence": 0.0-1.0
-    }
-  ],
-  "scores": {
-    "correctness": 0-100,
-    "clarity": 0-100,
-    "engagement": 0-100,
-    "delivery": 0-100
-  }
-}
-
-Focus on:
-1. Grammar errors (subject-verb agreement, tense consistency, etc.)
-2. Spelling mistakes
-3. Punctuation errors
-4. Style improvements (wordiness, passive voice, etc.)
-5. Clarity issues (ambiguous pronouns, unclear references)
-6. Engagement (boring phrases, clichés)
-7. Delivery (tone consistency, formality level)
-
-Be specific about the position of issues in the text.`;
+    const systemPrompt = this.getEnhancedSystemPrompt();
 
     try {
       const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
