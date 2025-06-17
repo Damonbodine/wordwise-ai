@@ -270,35 +270,326 @@ export const GrammarSuggestions: React.FC<GrammarSuggestionsProps> = ({
 
           <TabsContent value="correctness" className="p-4 space-y-3">
             {visibleIssues
-              .filter(i => i.type === 'spelling' || i.type === 'grammar')
-              .map(issue => (
-                // Same card component as above
-                <Card key={issue.id}>
-                  {/* ... */}
-                </Card>
-              ))}
+              .filter(i => i.type === 'spelling' || i.type === 'grammar' || i.type === 'punctuation')
+              .length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
+                  <p className="text-sm font-medium">Perfect grammar!</p>
+                  <p className="text-xs text-muted-foreground">No correctness issues found</p>
+                </div>
+              ) : (
+                visibleIssues
+                  .filter(i => i.type === 'spelling' || i.type === 'grammar' || i.type === 'punctuation')
+                  .map(issue => (
+                    <Card
+                      key={issue.id}
+                      className={cn(
+                        "cursor-pointer transition-all",
+                        selectedIssueId === issue.id && "ring-2 ring-primary"
+                      )}
+                      onClick={() => selectIssue(issue.id)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "p-1 rounded",
+                              getSeverityColor(issue.severity, issue.type)
+                            )}>
+                              {getIssueIcon(issue.type)}
+                            </div>
+                            <div>
+                              <CardTitle className="text-sm font-medium">
+                                {issue.category}
+                              </CardTitle>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {issue.message}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-xs",
+                              getSeverityColor(issue.severity, issue.type)
+                            )}
+                          >
+                            {issue.severity}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      
+                      {selectedIssueId === issue.id && (
+                        <CardContent className="pt-0">
+                          <div className="space-y-3">
+                            <div className="p-2 bg-muted rounded text-sm">
+                              <p className="font-medium mb-1">Original:</p>
+                              <p className="text-red-600 line-through">{issue.originalText}</p>
+                            </div>
+                            
+                            <div className="p-2 bg-muted rounded text-sm">
+                              <p className="font-medium mb-1">Suggested:</p>
+                              <p className="text-green-600">{issue.suggestedText}</p>
+                            </div>
+                            
+                            {issue.explanation && (
+                              <p className="text-xs text-muted-foreground">
+                                {issue.explanation}
+                              </p>
+                            )}
+                            
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAccept(issue.id);
+                                }}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  rejectSuggestion(issue.id);
+                                }}
+                              >
+                                Dismiss
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))
+              )}
           </TabsContent>
 
           <TabsContent value="clarity" className="p-4 space-y-3">
             {visibleIssues
               .filter(i => i.type === 'clarity' || i.type === 'style')
-              .map(issue => (
-                // Same card component as above
-                <Card key={issue.id}>
-                  {/* ... */}
-                </Card>
-              ))}
+              .length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle2 className="h-12 w-12 text-blue-500 mx-auto mb-2" />
+                  <p className="text-sm font-medium">Crystal clear!</p>
+                  <p className="text-xs text-muted-foreground">No clarity issues found</p>
+                </div>
+              ) : (
+                visibleIssues
+                  .filter(i => i.type === 'clarity' || i.type === 'style')
+                  .map(issue => (
+                    <Card
+                      key={issue.id}
+                      className={cn(
+                        "cursor-pointer transition-all",
+                        selectedIssueId === issue.id && "ring-2 ring-primary"
+                      )}
+                      onClick={() => selectIssue(issue.id)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "p-1 rounded",
+                              getSeverityColor(issue.severity, issue.type)
+                            )}>
+                              {getIssueIcon(issue.type)}
+                            </div>
+                            <div>
+                              <CardTitle className="text-sm font-medium">
+                                {issue.category}
+                              </CardTitle>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {issue.message}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-xs",
+                              getSeverityColor(issue.severity, issue.type)
+                            )}
+                          >
+                            {issue.severity}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      
+                      {selectedIssueId === issue.id && (
+                        <CardContent className="pt-0">
+                          <div className="space-y-3">
+                            <div className="p-2 bg-muted rounded text-sm">
+                              <p className="font-medium mb-1">Original:</p>
+                              <p className="text-red-600 line-through">{issue.originalText}</p>
+                            </div>
+                            
+                            <div className="p-2 bg-muted rounded text-sm">
+                              <p className="font-medium mb-1">Suggested:</p>
+                              <p className="text-green-600">{issue.suggestedText}</p>
+                            </div>
+                            
+                            {issue.explanation && (
+                              <p className="text-xs text-muted-foreground">
+                                {issue.explanation}
+                              </p>
+                            )}
+                            
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAccept(issue.id);
+                                }}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  rejectSuggestion(issue.id);
+                                }}
+                              >
+                                Dismiss
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))
+              )}
           </TabsContent>
 
           <TabsContent value="engagement" className="p-4 space-y-3">
             {visibleIssues
               .filter(i => i.type === 'engagement' || i.type === 'delivery')
-              .map(issue => (
-                // Same card component as above
-                <Card key={issue.id}>
-                  {/* ... */}
-                </Card>
-              ))}
+              .length === 0 ? (
+                <div className="text-center py-8">
+                  <CheckCircle2 className="h-12 w-12 text-purple-500 mx-auto mb-2" />
+                  <p className="text-sm font-medium">Highly engaging!</p>
+                  <p className="text-xs text-muted-foreground">No engagement issues found</p>
+                </div>
+              ) : (
+                visibleIssues
+                  .filter(i => i.type === 'engagement' || i.type === 'delivery')
+                  .map(issue => (
+                    <Card
+                      key={issue.id}
+                      className={cn(
+                        "cursor-pointer transition-all",
+                        selectedIssueId === issue.id && "ring-2 ring-primary"
+                      )}
+                      onClick={() => selectIssue(issue.id)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "p-1 rounded",
+                              getSeverityColor(issue.severity, issue.type)
+                            )}>
+                              {getIssueIcon(issue.type)}
+                            </div>
+                            <div>
+                              <CardTitle className="text-sm font-medium">
+                                {issue.category}
+                              </CardTitle>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {issue.message}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-xs",
+                              getSeverityColor(issue.severity, issue.type)
+                            )}
+                          >
+                            {issue.severity}
+                          </Badge>
+                        </div>
+                      </CardHeader>
+                      
+                      {selectedIssueId === issue.id && (
+                        <CardContent className="pt-0">
+                          <div className="space-y-3">
+                            <div className="p-2 bg-muted rounded text-sm">
+                              <p className="font-medium mb-1">Original:</p>
+                              <p className="text-red-600 line-through">{issue.originalText}</p>
+                            </div>
+                            
+                            <div className="p-2 bg-muted rounded text-sm">
+                              <p className="font-medium mb-1">Suggested:</p>
+                              <p className="text-green-600">{issue.suggestedText}</p>
+                            </div>
+                            
+                            {issue.explanation && (
+                              <p className="text-xs text-muted-foreground">
+                                {issue.explanation}
+                              </p>
+                            )}
+                            
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAccept(issue.id);
+                                }}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  rejectSuggestion(issue.id);
+                                }}
+                              >
+                                Dismiss
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                  ))
+              )}
           </TabsContent>
         </Tabs>
       </div>
