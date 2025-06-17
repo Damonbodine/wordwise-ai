@@ -262,3 +262,251 @@ To avoid rate limiting, we implement intelligent analysis triggers:
 - `components/editor/text-editor.tsx` - Smart triggering logic
 - `services/groq-test-service.ts` - Rate limit handling & fallback
 - `stores/grammar-store.ts` - Caching & state management
+
+---
+
+# 🚀 PRODUCTION DEPLOYMENT PRD
+## 3-Hour Sprint Plan to Launch WordWise AI
+
+**Timeline:** 3 hours  
+**Goal:** Deploy fully functional WordWise AI with authentication, document persistence, and Vercel hosting  
+**Current State:** 80% complete - excellent foundation, needs database connection layer
+
+---
+
+## 📊 CURRENT STATUS ANALYSIS
+
+### ✅ **What's Working (PRESERVE)**
+- **Rich Text Editor**: TipTap with auto-save, formatting toolbar
+- **Grammar Analysis**: Groq AI with Correctness/Clarity/Engagement analysis
+- **UI/UX**: Complete responsive design, color-coded suggestions
+- **Authentication System**: Fully built (currently disabled for testing)
+- **Database Schema**: Complete Supabase tables with RLS policies
+
+### ❌ **Critical Gaps (MUST FIX)**
+1. **Document Persistence**: Only in memory - documents lost on refresh
+2. **Authentication Disabled**: Commented out in main app
+3. **Hardcoded User IDs**: Not connected to real authenticated users
+
+---
+
+## 🎯 3-HOUR SPRINT BREAKDOWN
+
+### **⏰ HOUR 1: Database Document Persistence (90 minutes)**
+**Priority:** CRITICAL - Core functionality gap  
+**Goal:** Connect document store to Supabase database
+
+#### **Task 1.1: Create Supabase Document Service (30 min)**
+- **File:** `/services/supabase-document-service.ts`
+- **Function:** CRUD operations for documents table
+- **Features:**
+  - `createDocument(document, userId)`
+  - `updateDocument(id, content, userId)`
+  - `deleteDocument(id, userId)`
+  - `getUserDocuments(userId)`
+  - `shareDocument(id, emails)`
+
+#### **Task 1.2: Update Document Store with Database Integration (45 min)**
+- **File:** `/stores/document-store.ts`
+- **Changes:**
+  - Replace mock data with real Supabase calls
+  - Add loading states for async operations
+  - Implement real-time sync with database
+  - Add error handling for database operations
+
+#### **Task 1.3: Connect Auto-Save to Database (15 min)**
+- **File:** `/hooks/use-auto-save.ts`
+- **Update:** Save to Supabase instead of just memory
+- **Test:** Verify documents persist across page refreshes
+
+### **⏰ HOUR 2: Authentication Integration (60 minutes)**
+**Priority:** HIGH - Required for user-specific documents  
+**Goal:** Re-enable auth and connect to document system
+
+#### **Task 2.1: Re-enable Authentication (15 min)**
+- **File:** `/app/page.tsx`
+- **Action:** Uncomment ProtectedRoute wrapper (lines 133-138)
+- **Test:** Verify auth flow works end-to-end
+
+#### **Task 2.2: Connect User Context to Documents (30 min)**
+- **Files:** 
+  - `/stores/document-store.ts`
+  - `/components/editor/text-editor.tsx`
+- **Changes:**
+  - Replace hardcoded 'user-1' with real authenticated user ID
+  - Load user-specific documents on login
+  - Clear documents on logout
+
+#### **Task 2.3: Fix User ID References (15 min)**
+- **Search & Replace:** All hardcoded user IDs throughout codebase
+- **Files to check:**
+  - Document creation functions
+  - Grammar analysis calls
+  - Auto-save operations
+
+### **⏰ HOUR 3: Production Preparation & Deployment (30 minutes)**
+**Priority:** HIGH - Launch readiness  
+**Goal:** Clean code and deploy to Vercel
+
+#### **Task 3.1: Code Cleanup (15 min)**
+- **Remove debug code:**
+  - Console.log statements (17 files identified)
+  - TODO comments
+  - Commented-out code
+- **Environment check:**
+  - Verify no hardcoded URLs
+  - Confirm all secrets in environment variables
+
+#### **Task 3.2: Vercel Deployment (15 min)**
+- **Environment setup:**
+  - Add production environment variables to Vercel
+  - Configure Supabase production instance
+  - Set up custom domain if provided
+- **Deploy and test:**
+  - Deploy to Vercel
+  - Test authentication flow in production
+  - Verify document persistence works
+  - Test grammar analysis with production API keys
+
+---
+
+## 🔥 IMPLEMENTATION STRATEGY
+
+### **Risk Mitigation Approach**
+1. **Test Each Hour's Work Immediately** - Don't move to next phase until current works
+2. **Commit Frequently** - After each 30-minute task, commit working state
+3. **Feature Flags** - If something breaks, have quick rollback plan
+4. **Preserve Working Features** - Never modify text-editor or grammar systems
+
+### **Quality Gates**
+**End of Hour 1:** Documents persist across browser refresh  
+**End of Hour 2:** Full auth flow works, user sees only their documents  
+**End of Hour 3:** App deployed and functional on custom domain
+
+---
+
+## 📋 DETAILED TASK CHECKLIST
+
+### **HOUR 1 TASKS**
+
+#### ✅ **Task 1.1: Create Supabase Document Service**
+- [ ] Create `/services/supabase-document-service.ts`
+- [ ] Implement `createDocument(document, userId)` 
+- [ ] Implement `updateDocument(id, content, userId)`
+- [ ] Implement `deleteDocument(id, userId)`
+- [ ] Implement `getUserDocuments(userId)`
+- [ ] Add error handling and TypeScript types
+- [ ] Test CRUD operations manually
+
+#### ✅ **Task 1.2: Update Document Store**
+- [ ] Import Supabase service into document store
+- [ ] Replace `initialDocuments` mock data with database loading
+- [ ] Update `createDocument` to call Supabase
+- [ ] Update `updateDocument` to call Supabase  
+- [ ] Update `deleteDocument` to call Supabase
+- [ ] Add loading states (`isLoading`, `error` properties)
+- [ ] Test document operations in browser
+
+#### ✅ **Task 1.3: Connect Auto-Save**
+- [ ] Update auto-save hook to call Supabase service
+- [ ] Test auto-save persistence across browser refresh
+- [ ] Verify no performance issues with frequent saves
+
+### **HOUR 2 TASKS**
+
+#### ✅ **Task 2.1: Re-enable Authentication**
+- [ ] Uncomment ProtectedRoute in `/app/page.tsx`
+- [ ] Test sign-in flow
+- [ ] Test sign-up flow  
+- [ ] Test Google OAuth
+- [ ] Verify redirect after auth
+
+#### ✅ **Task 2.2: Connect User Context**
+- [ ] Replace hardcoded user IDs in document store
+- [ ] Load user documents on auth state change
+- [ ] Clear documents on logout
+- [ ] Test user isolation (User A can't see User B's docs)
+
+#### ✅ **Task 2.3: Fix Hardcoded References**
+- [ ] Search for 'user-1' in codebase and replace
+- [ ] Update grammar analysis user context
+- [ ] Update auto-save user context
+- [ ] Test complete user flow
+
+### **HOUR 3 TASKS**
+
+#### ✅ **Task 3.1: Code Cleanup**
+- [ ] Remove console.log statements
+- [ ] Remove TODO comments
+- [ ] Remove commented-out code
+- [ ] Verify no API keys in source code
+- [ ] Run TypeScript build check
+- [ ] Run linting
+
+#### ✅ **Task 3.2: Vercel Deployment**
+- [ ] Set environment variables in Vercel dashboard
+- [ ] Configure production Supabase project
+- [ ] Deploy to Vercel
+- [ ] Test production deployment
+- [ ] Configure custom domain (if provided)
+- [ ] Final end-to-end testing
+
+---
+
+## ⚠️ CRITICAL SUCCESS FACTORS
+
+### **Non-Negotiable Requirements**
+1. **Document Persistence:** Users MUST be able to close browser and return to find their documents
+2. **User Isolation:** Users MUST only see their own documents
+3. **Working Grammar Analysis:** Core differentiator must continue working
+4. **Responsive Design:** Must work on mobile and desktop
+
+### **Acceptable Compromises (if time runs short)**
+- Document collaboration features can be postponed
+- Advanced subscription features can be basic
+- Some UI polish can be deferred
+- Analytics and monitoring can be added post-launch
+
+### **Emergency Fallbacks**
+- If Supabase integration fails: Implement localStorage persistence
+- If authentication breaks: Add guest mode with browser storage
+- If deployment fails: Use development environment with custom domain
+
+---
+
+## 🎯 SUCCESS METRICS
+
+**Launch Definition:** App is live at custom domain where users can:
+1. ✅ Sign up / Sign in successfully
+2. ✅ Create and edit documents that persist
+3. ✅ Receive AI grammar suggestions
+4. ✅ Documents are private to each user
+5. ✅ Auto-save works and preserves content
+
+**Timeline Check:**
+- **End Hour 1:** Document persistence working locally
+- **End Hour 2:** Full auth flow working locally  
+- **End Hour 3:** App deployed and functional in production
+
+---
+
+## 🚨 EMERGENCY PROTOCOLS
+
+**If Behind Schedule:**
+1. **Hour 1 Issues:** Focus on basic create/read documents only
+2. **Hour 2 Issues:** Use simplified auth (skip OAuth, email/password only)
+3. **Hour 3 Issues:** Deploy with minimal cleanup, fix post-launch
+
+**If Critical Bug:**
+1. Immediately roll back to last working commit
+2. Implement minimal viable version of broken feature
+3. Document issue for post-launch fix
+
+**Communication:**
+- Update progress every 30 minutes
+- Flag blockers immediately  
+- Request guidance if any step seems too complex
+
+---
+
+**Ready to begin 3-hour deployment sprint! 🚀**
