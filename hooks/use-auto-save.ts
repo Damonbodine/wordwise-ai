@@ -31,6 +31,12 @@ export interface UseAutoSaveOptions {
   maxRetries?: number;
   
   /**
+   * User ID for database operations
+   * Required for database persistence
+   */
+  userId?: string;
+  
+  /**
    * Callback fired when save operation completes successfully
    */
   onSaveSuccess?: (documentId: string) => void;
@@ -46,12 +52,13 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
     debounceMs = 2000,
     enabled = true,
     maxRetries = 3,
+    userId,
     onSaveSuccess,
     onSaveError,
   } = options;
 
   // Store hooks
-  const { activeDocumentId, updateDocumentContent } = useDocumentStore();
+  const { activeDocumentId, updateDocumentContent, updateDocument } = useDocumentStore();
   const { 
     currentEditorContent, 
     markSaved, 
@@ -121,8 +128,19 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
         error: null 
       }));
 
-      // Perform the save operation
-      await updateDocumentContent(documentId, content, plainText);
+      // Update local state immediately for UI responsiveness
+      updateDocumentContent(documentId, content, plainText);
+      
+      // Save to database if userId is provided
+      if (userId) {
+        await updateDocument(documentId, { 
+          content, 
+          plainText 
+        }, userId);
+        console.log(`💾 Database save completed for document: ${documentId}`);
+      } else {
+        console.log(`💾 Local-only save for document: ${documentId} (no userId provided)`);
+      }
 
       if (!isMountedRef.current) return;
 
