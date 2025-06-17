@@ -159,23 +159,12 @@ export function TextEditor({
       const html = editor.getHTML();
       const text = editor.getText();
       
-      console.log('📝 Editor onUpdate:', {
-        isInitializing,
-        hasInitialized: hasInitializedRef.current,
-        htmlLength: html.length,
-        textLength: text.length,
-        textPreview: text.slice(0, 50)
-      });
-      
       // Update editor store immediately (real-time) - this calculates all stats
       setEditorContent(html, text);
       
       // Only trigger auto-save if not initializing and content has actually changed
       if (!isInitializing && hasInitializedRef.current) {
-        console.log('✅ Triggering auto-save');
         autoSave.triggerAutoSave(html, text);
-      } else {
-        console.log('⏸️ Auto-save not triggered (still initializing)');
       }
     },
     onFocus: () => {
@@ -263,7 +252,7 @@ export function TextEditor({
       // Cancel any pending auto-save operations on unmount
       autoSave.cancelPendingSave();
     };
-  }, [autoSave]);
+  }, []); // Empty dependency array - only run on unmount
 
   // Update editor settings when they change
   React.useEffect(() => {

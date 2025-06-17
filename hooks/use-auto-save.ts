@@ -190,23 +190,12 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
 
   // Debounced save trigger
   const triggerAutoSave = useCallback((content: string, plainText: string) => {
-    console.log('🔍 triggerAutoSave called:', {
-      enabled,
-      activeDocumentId,
-      isMounted: isMountedRef.current,
-      contentLength: content.length,
-      lastContentLength: lastContentRef.current?.length,
-      contentChanged: content !== lastContentRef.current
-    });
-
     if (!enabled || !activeDocumentId || !isMountedRef.current) {
-      console.log('❌ Auto-save skipped: prerequisites not met');
       return;
     }
 
     // Skip if content hasn't actually changed
     if (content === lastContentRef.current) {
-      console.log('⏭️ Auto-save skipped: content unchanged');
       return;
     }
 
@@ -230,6 +219,11 @@ export function useAutoSave(options: UseAutoSaveOptions = {}) {
 
     // Set new timeout
     timeoutRef.current = setTimeout(() => {
+      console.log('⏱️ Auto-save timer fired!', {
+        isMounted: isMountedRef.current,
+        activeDocumentId,
+        contentLength: content.length
+      });
       if (isMountedRef.current && activeDocumentId) {
         performSave(activeDocumentId, content, plainText);
       }
