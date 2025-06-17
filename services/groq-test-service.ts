@@ -46,57 +46,73 @@ export class GroqTestService {
   }
 
   private getEnhancedSystemPrompt(): string {
-    return `You are an expert writing and grammar assistant with advanced training in linguistic analysis. Your primary focus is on CORRECTNESS - identifying and correcting grammar, spelling, and punctuation errors with surgical precision.
+    return `You are an expert writing assistant with specialized expertise in CORRECTNESS, CLARITY, and ENGAGEMENT. Analyze text comprehensively across all three dimensions with equal focus.
 
 ## ANALYSIS FRAMEWORK
 
-### CORRECTNESS PRIORITY (PRIMARY FOCUS)
-1. **Grammar Errors** (High Priority):
-   - Subject-verb disagreement ("The team are" → "The team is")
-   - Incorrect pronoun case ("between you and I" → "between you and me") 
-   - Dangling modifiers ("Walking to the store, the rain started")
-   - Run-on sentences and fragments
-   - Incorrect verb tense consistency
-   - Misplaced apostrophes ("it's" vs "its")
-   - Double negatives ("don't know nothing" → "don't know anything")
+### 1. CORRECTNESS (High Priority)
+**Grammar Errors**:
+- Subject-verb disagreement ("The team are" → "The team is")
+- Incorrect pronoun case ("between you and I" → "between you and me") 
+- Dangling modifiers ("Walking to the store, the rain started")
+- Run-on sentences and fragments
+- Incorrect verb tense consistency
+- Misplaced apostrophes ("it's" vs "its")
 
-2. **Spelling Errors** (High Priority):
-   - Misspelled words (use context for homophones: "there/their/they're")
-   - Typos and character transpositions
-   - Commonly confused words ("effect/affect", "lose/loose")
+**Spelling & Punctuation**:
+- Misspelled words and typos
+- Homophones ("there/their/they're", "effect/affect")
+- Missing or incorrect commas, semicolons, periods
 
-3. **Punctuation Errors** (Medium Priority):
-   - Missing or incorrect commas in compound sentences
-   - Semicolon misuse
-   - Quotation mark placement
-   - Missing periods or question marks
+### 2. CLARITY (High Priority)
+**Sentence Structure**:
+- Ambiguous pronoun references ("it", "this", "that" without clear antecedents)
+- Overly complex sentences that obscure meaning
+- Unclear subject-verb relationships
+- Misplaced modifiers creating confusion
 
-### SECONDARY ANALYSIS
-4. **Clarity Issues** (Medium Priority):
-   - Ambiguous pronoun references
-   - Unclear sentence structure
-   - Wordiness that obscures meaning
+**Readability Issues**:
+- Excessive wordiness ("in order to" → "to", "due to the fact that" → "because")
+- Redundant phrases ("advance planning" → "planning")
+- Vague language ("very good" → "excellent", "a lot of" → "many")
+- Unclear transitions between ideas
 
-5. **Style & Engagement** (Lower Priority):
-   - Passive voice overuse (when active is clearer)
-   - Repetitive word choice
-   - Weak verb choices
+**Word Choice**:
+- Imprecise vocabulary that creates ambiguity
+- Jargon without explanation for general audiences
+- Inconsistent terminology for the same concept
+
+### 3. ENGAGEMENT (Medium Priority)
+**Writing Energy**:
+- Passive voice overuse (when active voice is clearer and more dynamic)
+- Weak verb choices ("is located" → "sits", "has the ability to" → "can")
+- Monotonous sentence structure (all short or all long sentences)
+
+**Reader Interest**:
+- Generic or clichéd phrases ("think outside the box", "at the end of the day")
+- Repetitive word choice within paragraphs
+- Lack of specific, concrete details
+
+**Tone & Style**:
+- Inconsistent formality level
+- Overly formal language for casual contexts
+- Missing personality or voice in appropriate contexts
 
 ## OUTPUT FORMAT
-Return ONLY valid JSON with this exact structure:
+Return ONLY valid JSON:
 {
   "issues": [
     {
-      "type": "grammar|spelling|punctuation|clarity|style",
-      "category": "Grammar Error|Spelling Error|Punctuation|Clarity|Style",
+      "type": "grammar|spelling|punctuation|clarity|engagement|style",
+      "category": "Grammar Error|Spelling Error|Punctuation|Clarity Issue|Engagement|Style",
       "severity": "high|medium|low",
-      "message": "Concise issue description (max 80 chars)",
-      "explanation": "Why this is incorrect and why the suggestion is better",
+      "message": "Clear, actionable description (max 80 chars)",
+      "explanation": "Why this improves readability, understanding, or engagement",
       "originalText": "exact text from input",
-      "suggestedText": "corrected version",
+      "suggestedText": "improved version",
       "startIndex": 0,
       "endIndex": 0,
-      "confidence": 0.95
+      "confidence": 0.85
     }
   ],
   "scores": {
@@ -108,18 +124,23 @@ Return ONLY valid JSON with this exact structure:
 }
 
 ## SCORING GUIDELINES
-- **Correctness**: 100 = no grammar/spelling/punctuation errors, 90+ = minor issues, 80+ = some errors, <80 = significant problems
-- **Clarity**: How easily understood is the text?
-- **Engagement**: How interesting/compelling is the writing?
-- **Delivery**: How well does tone/style match intent?
+- **Correctness**: Grammar, spelling, punctuation accuracy (100 = perfect, 80+ = good)
+- **Clarity**: How easily readers understand the message (100 = crystal clear, 80+ = mostly clear)
+- **Engagement**: How compelling and interesting the writing is (100 = captivating, 80+ = engaging)
+- **Delivery**: How well tone and style match the intended purpose (100 = perfect match)
+
+## ANALYSIS PRIORITIES
+1. **Always flag CORRECTNESS issues** (grammar/spelling errors undermine credibility)
+2. **Prioritize CLARITY improvements** that significantly improve understanding
+3. **Suggest ENGAGEMENT enhancements** that don't sacrifice clarity or correctness
+4. **Focus on high-impact changes** rather than minor stylistic preferences
 
 ## CRITICAL RULES
-- ONLY suggest corrections you are 90%+ confident about
-- For CORRECTNESS issues, always use "high" or "medium" severity
-- Include exact originalText that appears in the input
-- Make suggestedText grammatically perfect
-- Prioritize fixing errors over style preferences
-- Be conservative - don't over-correct stylistic choices`;
+- Only suggest changes you're 85%+ confident will improve the writing
+- Provide specific, actionable suggestions
+- Explain WHY each change improves the text
+- Respect the author's voice while enhancing clarity and engagement
+- Prioritize reader understanding above all else`;
   }
 
   private async performAnalysis(text: string, cacheKey: string): Promise<GrammarAnalysisResult> {
@@ -274,13 +295,32 @@ Return ONLY valid JSON with this exact structure:
       'priviledge': 'privilege'
     };
     
-    // Common grammar patterns to check
+    // Enhanced pattern detection for grammar, clarity, and engagement
     const grammarPatterns = [
-      { pattern: /\bi\s+am\s+went\b/gi, correction: 'I went', type: 'Verb tense error' },
-      { pattern: /\byou\s+was\b/gi, correction: 'you were', type: 'Subject-verb disagreement' },
-      { pattern: /\btheir\s+going\b/gi, correction: 'they\'re going', type: 'Homophone confusion' },
-      { pattern: /\bits\s+raining\b/gi, correction: 'it\'s raining', type: 'Contraction error' },
-      { pattern: /\beffect\s+the\s+change\b/gi, correction: 'affect the change', type: 'Effect/affect confusion' }
+      { pattern: /\bi\s+am\s+went\b/gi, correction: 'I went', type: 'grammar', category: 'Grammar Error', message: 'Verb tense error' },
+      { pattern: /\byou\s+was\b/gi, correction: 'you were', type: 'grammar', category: 'Grammar Error', message: 'Subject-verb disagreement' },
+      { pattern: /\btheir\s+going\b/gi, correction: 'they\'re going', type: 'grammar', category: 'Grammar Error', message: 'Homophone confusion' },
+      { pattern: /\bits\s+raining\b/gi, correction: 'it\'s raining', type: 'punctuation', category: 'Punctuation', message: 'Contraction error' },
+      { pattern: /\beffect\s+the\s+change\b/gi, correction: 'affect the change', type: 'grammar', category: 'Grammar Error', message: 'Effect/affect confusion' }
+    ];
+    
+    // Clarity improvement patterns
+    const clarityPatterns = [
+      { pattern: /\bin\s+order\s+to\b/gi, correction: 'to', type: 'clarity', category: 'Clarity Issue', message: 'Remove unnecessary words' },
+      { pattern: /\bdue\s+to\s+the\s+fact\s+that\b/gi, correction: 'because', type: 'clarity', category: 'Clarity Issue', message: 'Simplify wordy phrase' },
+      { pattern: /\badvance\s+planning\b/gi, correction: 'planning', type: 'clarity', category: 'Clarity Issue', message: 'Remove redundant word' },
+      { pattern: /\ba\s+lot\s+of\b/gi, correction: 'many', type: 'clarity', category: 'Clarity Issue', message: 'Use more precise language' },
+      { pattern: /\bvery\s+good\b/gi, correction: 'excellent', type: 'clarity', category: 'Clarity Issue', message: 'Use stronger, more specific word' },
+      { pattern: /\bthis\s+is\s+important\b/gi, correction: 'this matters because', type: 'clarity', category: 'Clarity Issue', message: 'Explain why something is important' }
+    ];
+    
+    // Engagement enhancement patterns  
+    const engagementPatterns = [
+      { pattern: /\bis\s+located\s+in\b/gi, correction: 'sits in', type: 'engagement', category: 'Engagement', message: 'Use more dynamic verb' },
+      { pattern: /\bhas\s+the\s+ability\s+to\b/gi, correction: 'can', type: 'engagement', category: 'Engagement', message: 'Use concise, active language' },
+      { pattern: /\bthink\s+outside\s+the\s+box\b/gi, correction: 'innovate', type: 'engagement', category: 'Engagement', message: 'Replace cliché with specific term' },
+      { pattern: /\bat\s+the\s+end\s+of\s+the\s+day\b/gi, correction: 'ultimately', type: 'engagement', category: 'Engagement', message: 'Replace overused phrase' },
+      { pattern: /\bwas\s+\w+ed\s+by\b/gi, correction: '', type: 'engagement', category: 'Engagement', message: 'Consider active voice for more energy' }
     ];
     
     let issueId = 0;
@@ -304,35 +344,51 @@ Return ONLY valid JSON with this exact structure:
       }
     });
     
-    // Check for grammar patterns
-    grammarPatterns.forEach((pattern, index) => {
+    // Check all pattern types for comprehensive fallback analysis
+    const allPatterns = [...grammarPatterns, ...clarityPatterns, ...engagementPatterns];
+    
+    allPatterns.forEach((pattern, index) => {
       const matches = text.match(pattern.pattern);
       if (matches) {
         matches.forEach(match => {
+          const severity = pattern.type === 'grammar' || pattern.type === 'spelling' ? 'high' : 
+                          pattern.type === 'clarity' ? 'medium' : 'low';
+          
           issues.push({
-            id: `fallback_grammar_${issueId++}`,
-            type: 'grammar',
-            category: 'Grammar Error',
-            severity: 'high',
-            message: pattern.type,
-            explanation: `"${match.trim()}" contains a grammar error. Use "${pattern.correction}" instead.`,
+            id: `fallback_${pattern.type}_${issueId++}`,
+            type: pattern.type,
+            category: pattern.category,
+            severity: severity,
+            message: pattern.message,
+            explanation: `"${match.trim()}" can be improved. ${pattern.message}: "${pattern.correction || 'see suggestion'}"`,
             originalText: match.trim(),
-            suggestedText: pattern.correction,
+            suggestedText: pattern.correction || match.trim(),
             position: { start: 0, end: match.length },
-            confidence: 0.85
+            confidence: pattern.type === 'grammar' ? 0.9 : pattern.type === 'clarity' ? 0.8 : 0.7
           });
         });
       }
     });
     
+    // Calculate scores based on issue types found
+    const correctnessIssues = issues.filter(i => i.type === 'grammar' || i.type === 'spelling' || i.type === 'punctuation');
+    const clarityIssues = issues.filter(i => i.type === 'clarity');
+    const engagementIssues = issues.filter(i => i.type === 'engagement' || i.type === 'style');
+    
+    const correctnessScore = Math.max(60, 100 - (correctnessIssues.length * 15));
+    const clarityScore = Math.max(70, 100 - (clarityIssues.length * 10));
+    const engagementScore = Math.max(75, 100 - (engagementIssues.length * 8));
+    const deliveryScore = 90; // Base delivery score
+    const overallScore = Math.round((correctnessScore + clarityScore + engagementScore + deliveryScore) / 4);
+    
     return {
       issues,
       scores: {
-        correctness: issues.length > 0 ? 75 : 95,
-        clarity: 90,
-        engagement: 85,
-        delivery: 90,
-        overall: issues.length > 0 ? 80 : 90
+        correctness: correctnessScore,
+        clarity: clarityScore,
+        engagement: engagementScore,
+        delivery: deliveryScore,
+        overall: overallScore
       },
       metadata: {
         wordCount: words.length,
