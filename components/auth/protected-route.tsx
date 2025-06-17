@@ -24,21 +24,14 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     user, 
     isInitialized, 
     isLoading, 
-    hasActiveSubscription,
-    initializeAuth 
+    hasActiveSubscription
   } = useAuthStore();
 
-  // Initialize auth on component mount if not already initialized
-  useEffect(() => {
-    if (!isInitialized && !isLoading) {
-      initializeAuth();
-    }
-  }, [isInitialized, isLoading, initializeAuth]);
-
-  // Redirect to sign-in if not authenticated
+  // Redirect to sign-in if not authenticated (only after auth is initialized)
   useEffect(() => {
     if (isInitialized && !user && !isLoading) {
       const signInUrl = redirectTo || `/auth/signin?redirectTo=${encodeURIComponent(pathname)}`;
+      console.log('[PROTECTED ROUTE] Redirecting unauthenticated user to:', signInUrl);
       router.push(signInUrl);
     }
   }, [user, isInitialized, isLoading, router, pathname, redirectTo]);
@@ -46,11 +39,13 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   // Redirect to upgrade page if subscription is required but user doesn't have one
   useEffect(() => {
     if (isInitialized && user && requireSubscription && !hasActiveSubscription()) {
-      router.push(`/upgrade?redirectTo=${encodeURIComponent(pathname)}`);
+      const upgradeUrl = `/upgrade?redirectTo=${encodeURIComponent(pathname)}`;
+      console.log('[PROTECTED ROUTE] Redirecting to upgrade:', upgradeUrl);
+      router.push(upgradeUrl);
     }
   }, [user, isInitialized, requireSubscription, hasActiveSubscription, router, pathname]);
 
-  // Show loading state while initializing or authenticating
+  // Show loading state while auth is initializing
   if (!isInitialized || isLoading) {
     return fallback || (
       <div className="min-h-screen flex items-center justify-center">
@@ -90,6 +85,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // User is authenticated and meets all requirements
+  console.log('[PROTECTED ROUTE] User authenticated, rendering protected content');
   return <>{children}</>;
 };
 
@@ -126,27 +122,22 @@ export function useRequireAuth(options?: {
     user, 
     isInitialized, 
     isLoading, 
-    hasActiveSubscription,
-    initializeAuth 
+    hasActiveSubscription
   } = useAuthStore();
 
   const { redirectTo, requireSubscription = false } = options || {};
 
-  // Initialize auth if needed
-  useEffect(() => {
-    if (!isInitialized && !isLoading) {
-      initializeAuth();
-    }
-  }, [isInitialized, isLoading, initializeAuth]);
-
-  // Handle redirects
+  // Handle redirects (but don't initialize auth - that's handled by AuthProvider)
   useEffect(() => {
     if (isInitialized && !isLoading) {
       if (!user) {
         const signInUrl = redirectTo || `/auth/signin?redirectTo=${encodeURIComponent(pathname)}`;
+        console.log('[USE REQUIRE AUTH] Redirecting to:', signInUrl);
         router.push(signInUrl);
       } else if (requireSubscription && !hasActiveSubscription()) {
-        router.push(`/upgrade?redirectTo=${encodeURIComponent(pathname)}`);
+        const upgradeUrl = `/upgrade?redirectTo=${encodeURIComponent(pathname)}`;
+        console.log('[USE REQUIRE AUTH] Redirecting to upgrade:', upgradeUrl);
+        router.push(upgradeUrl);
       }
     }
   }, [user, isInitialized, isLoading, requireSubscription, hasActiveSubscription, router, pathname, redirectTo]);

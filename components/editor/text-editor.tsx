@@ -11,6 +11,7 @@ import { useEditorStore } from "@/stores/editor-store";
 import { useDocumentStore } from "@/stores/document-store";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useGrammarStore } from "@/stores/grammar-store";
+import { useAuthStore } from "@/stores/auth-store";
 
 interface TextEditorProps {
   className?: string;
@@ -47,6 +48,9 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
     documents,
   } = useDocumentStore();
 
+  // Get user for database operations
+  const { user } = useAuthStore();
+
   // Initialize grammar analysis store
   const {
     analyzeText,
@@ -58,6 +62,7 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
     debounceMs: 2000,
     enabled: true,
     maxRetries: 3,
+    userId: user?.id, // Pass user ID for database persistence
     onSaveSuccess: (documentId) => {
       console.log(`✅ Auto-save successful for document: ${documentId}`);
     },

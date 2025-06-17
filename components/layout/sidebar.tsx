@@ -50,9 +50,9 @@ export function Sidebar({
     ? Math.round(documents.reduce((sum, doc) => sum + doc.analysis.grammarScore, 0) / documents.length)
     : 100;
 
-  const handleCreateDocument = () => {
+  const handleCreateDocument = async () => {
     try {
-      const newDoc = createDocument();
+      const newDoc = await createDocument();
       console.log('📝 Created new document:', newDoc.id, newDoc.title);
       if (onMobileClose) onMobileClose(); // Close mobile sidebar after creating
     } catch (error) {

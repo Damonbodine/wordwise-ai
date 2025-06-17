@@ -80,14 +80,16 @@ export class SupabaseDocumentService {
         ...(updates.title && { title: updates.title }),
         ...(updates.content && { content: updates.content }),
         ...(updates.plainText && { plain_text: updates.plainText }),
-        ...(updates.status && { status: updates.status }),
+        ...(updates.status && { 
+          status: updates.status === 'shared' ? 'published' : updates.status as ('draft' | 'published' | 'archived')
+        }),
         ...(updates.tags && { tags: updates.tags }),
         ...(updates.isFavorite !== undefined && { is_favorite: updates.isFavorite }),
         ...(updates.isArchived !== undefined && { is_archived: updates.isArchived }),
         
         // Transform nested objects to JSONB for database storage
         ...(updates.analysis && { 
-          analysis_data: {
+          analysis_data: JSON.parse(JSON.stringify({
             correctness: updates.analysis.grammarScore,
             clarity: updates.analysis.clarityScore,
             engagement: updates.analysis.engagementScore,
@@ -96,10 +98,10 @@ export class SupabaseDocumentService {
             clarityIssues: updates.analysis.clarityIssues,
             tone: updates.analysis.tone,
             lastAnalyzedAt: updates.analysis.lastAnalyzedAt,
-          }
+          }))
         }),
-        ...(updates.settings && { settings: updates.settings }),
-        ...(updates.sharing && { sharing: updates.sharing }),
+        ...(updates.settings && { settings: JSON.parse(JSON.stringify(updates.settings)) }),
+        ...(updates.sharing && { sharing: JSON.parse(JSON.stringify(updates.sharing)) }),
         
         // Note: stats fields like word_count, character_count, reading_time 
         // will be recalculated by DB trigger when plain_text changes

@@ -3,7 +3,8 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
-import { useUserStore } from "@/stores/user-store";
+import { useAuthStore } from "@/stores/auth-store";
+import { useRouter } from "next/navigation";
 
 interface HeaderProps {
   onMobileMenuToggle?: () => void;
@@ -12,7 +13,23 @@ interface HeaderProps {
 
 export function Header({ onMobileMenuToggle, className }: HeaderProps) {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = React.useState(false);
-  const { user, logout, isSubscriptionActive } = useUserStore();
+  const { user, profile, signOut, hasActiveSubscription } = useAuthStore();
+  const router = useRouter();
+  const dropdownRef = React.useRef<HTMLDivElement>(null);
+
+  // Close dropdown when clicking outside
+  React.useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsProfileMenuOpen(false);
+      }
+    }
+
+    if (isProfileMenuOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [isProfileMenuOpen]);
 
   return (
     <header className={cn("border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60", className)}>
@@ -82,27 +99,37 @@ export function Header({ onMobileMenuToggle, className }: HeaderProps) {
         </nav>
 
         {/* Right Section: User Profile */}
-        <div className="relative">
-          <Button
-            variant="ghost"
-            size="sm"
-            className="relative h-9 w-9 rounded-full"
-            onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-            aria-expanded={isProfileMenuOpen}
-            aria-haspopup="true"
-            aria-label="User profile menu"
-          >
-            <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center">
-              <svg
-                className="h-4 w-4"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
-              </svg>
-            </div>
-          </Button>
+        <div className="relative" ref={dropdownRef}>
+          {user ? (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="relative h-9 w-9 rounded-full"
+              onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+              aria-expanded={isProfileMenuOpen}
+              aria-haspopup="true"
+              aria-label="User profile menu"
+            >
+              <div className="h-7 w-7 rounded-full bg-muted flex items-center justify-center">
+                <svg
+                  className="h-4 w-4"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                </svg>
+              </div>
+            </Button>
+          ) : (
+            <Button
+              onClick={() => router.push('/auth/signin')}
+              size="sm"
+              className="h-9"
+            >
+              Sign In
+            </Button>
+          )}
 
           {/* Profile Dropdown */}
           {isProfileMenuOpen && user && (
@@ -110,24 +137,23 @@ export function Header({ onMobileMenuToggle, className }: HeaderProps) {
               <div className="px-3 py-2">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    {user.name.charAt(0).toUpperCase()}
+                    {profile?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{user.name}</div>
+                    <div className="text-sm font-medium truncate">{profile?.full_name || 'User'}</div>
                     <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                   </div>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
                   <div className={cn(
                     "px-2 py-1 rounded-full text-xs font-medium",
-                    user.subscription === 'free' ? "bg-muted text-muted-foreground" :
-                    user.subscription === 'premium' ? "bg-primary/10 text-primary" :
-                    user.subscription === 'business' ? "bg-blue-500/10 text-blue-600" :
+                    profile?.subscription_tier === 'free' ? "bg-muted text-muted-foreground" :
+                    profile?.subscription_tier === 'pro' ? "bg-primary/10 text-primary" :
                     "bg-purple-500/10 text-purple-600"
                   )}>
-                    {user.subscription.charAt(0).toUpperCase() + user.subscription.slice(1)}
+                    {profile?.subscription_tier?.charAt(0)?.toUpperCase() + (profile?.subscription_tier?.slice(1) || '')}
                   </div>
-                  {!user.isVerified && (
+                  {!user.email_confirmed_at && (
                     <div className="px-2 py-1 rounded-full text-xs font-medium bg-yellow-500/10 text-yellow-600">
                       Unverified
                     </div>
@@ -156,9 +182,14 @@ export function Header({ onMobileMenuToggle, className }: HeaderProps) {
               </button>
               <div className="h-px bg-border my-1" />
               <button 
-                onClick={() => {
-                  logout();
-                  setIsProfileMenuOpen(false);
+                onClick={async () => {
+                  try {
+                    await signOut();
+                    setIsProfileMenuOpen(false);
+                    router.push('/auth/signin');
+                  } catch (error) {
+                    console.error('Sign out failed:', error);
+                  }
                 }}
                 className="flex w-full items-center rounded-sm px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-red-600 hover:text-red-600"
               >

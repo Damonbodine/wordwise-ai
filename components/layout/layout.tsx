@@ -59,9 +59,9 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
   }, [activeDocument]);
 
   // Custom new document handler
-  const handleNewDocument = React.useCallback(() => {
+  const handleNewDocument = React.useCallback(async () => {
     try {
-      const newDoc = createDocument();
+      const newDoc = await createDocument();
       console.log('📝 New document created via keyboard shortcut:', newDoc.title);
       closeMobileSidebar(); // Close mobile sidebar if open
     } catch (error) {

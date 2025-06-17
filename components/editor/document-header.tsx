@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/stores/document-store";
 import { useEditorStore } from "@/stores/editor-store";
 import { useAutoSave } from "@/hooks/use-auto-save";
+import { useAuthStore } from "@/stores/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { KeyboardShortcutsTooltip } from "@/components/ui/keyboard-shortcuts-tooltip";

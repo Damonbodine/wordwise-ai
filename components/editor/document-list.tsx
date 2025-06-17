@@ -4,6 +4,7 @@ import * as React from "react";
 import { Search, FileText, Calendar, SortAsc, SortDesc, Plus, Heart, Clock, MoreHorizontal, Edit3, Copy, Trash2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/stores/document-store";
+import { useAuthStore } from "@/stores/auth-store";
 import { Document } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -30,6 +31,9 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
     toggleFavorite,
     searchDocuments,
   } = useDocumentStore();
+
+  // Get user for database operations
+  const { user } = useAuthStore();
 
   // Local state for UI controls
   const [searchQuery, setSearchQuery] = React.useState("");
@@ -93,15 +97,20 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
   }, [setActiveDocument, onDocumentSelect]);
 
   // Handle new document creation
-  const handleCreateDocument = React.useCallback(() => {
+  const handleCreateDocument = React.useCallback(async () => {
+    if (!user?.id) {
+      console.error('❌ Cannot create document: User not authenticated');
+      return;
+    }
+
     try {
-      const newDoc = createDocument();
+      const newDoc = await createDocument("Untitled Document", "", user.id);
       console.log('📝 DocumentList created new document:', newDoc.id, newDoc.title);
       onDocumentSelect?.(newDoc.id);
     } catch (error) {
       console.error('❌ DocumentList failed to create document:', error);
     }
-  }, [createDocument, onDocumentSelect]);
+  }, [createDocument, onDocumentSelect, user?.id]);
 
   // Handle sort change
   const handleSortChange = React.useCallback((newSortBy: SortOption) => {
@@ -139,13 +148,18 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
   }, []);
 
   const handleDuplicateDocument = React.useCallback(async (document: Document) => {
+    if (!user?.id) {
+      console.error('❌ Cannot duplicate document: User not authenticated');
+      return;
+    }
+
     try {
       const duplicateData = DocumentService.duplicateDocument(document);
-      const newDoc = createDocument(duplicateData.title, duplicateData.content);
+      const newDoc = await createDocument(duplicateData.title, duplicateData.content, user.id);
       
       // Update the newly created document with additional data from duplicate
-      setTimeout(() => {
-        updateDocument(newDoc.id, {
+      setTimeout(async () => {
+        await updateDocument(newDoc.id, {
           tags: duplicateData.tags,
           stats: duplicateData.stats,
           settings: duplicateData.settings,
@@ -154,14 +168,14 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
           status: duplicateData.status,
           folderId: duplicateData.folderId,
           templateId: duplicateData.templateId,
-        });
+        }, user.id);
       }, 100);
       
       console.log('📋 Document duplicated:', newDoc.title);
     } catch (error) {
       console.error('Failed to duplicate document:', error);
     }
-  }, [createDocument, updateDocument]);
+  }, [createDocument, updateDocument, user?.id]);
 
   const handleDeleteDocument = React.useCallback((document: Document) => {
     const validation = DocumentService.canDeleteDocument(document);
@@ -199,21 +213,26 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
     }
   }, []);
 
-  const handleCreateFromTemplate = React.useCallback((templateKey: keyof typeof DOCUMENT_TEMPLATES) => {
+  const handleCreateFromTemplate = React.useCallback(async (templateKey: keyof typeof DOCUMENT_TEMPLATES) => {
+    if (!user?.id) {
+      console.error('❌ Cannot create document from template: User not authenticated');
+      return;
+    }
+
     try {
       const templateData = DocumentService.createNewDocument(templateKey);
-      const newDoc = createDocument(templateData.title, templateData.content);
+      const newDoc = await createDocument(templateData.title, templateData.content, user.id);
       
       // Update the newly created document with additional data from template
-      setTimeout(() => {
-        updateDocument(newDoc.id, {
+      setTimeout(async () => {
+        await updateDocument(newDoc.id, {
           tags: templateData.tags,
           stats: templateData.stats,
           settings: templateData.settings,
           analysis: templateData.analysis,
           sharing: templateData.sharing,
           status: templateData.status,
-        });
+        }, user.id);
       }, 100);
       
       console.log('📋 Document created from template:', templateKey, newDoc.title);
@@ -222,7 +241,7 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
     } catch (error) {
       console.error('Failed to create document from template:', error);
     }
-  }, [createDocument, updateDocument, onDocumentSelect]);
+  }, [createDocument, updateDocument, onDocumentSelect, user?.id]);
 
   // Format date for display (client-side only to prevent hydration errors)
   const [isClient, setIsClient] = React.useState(false);

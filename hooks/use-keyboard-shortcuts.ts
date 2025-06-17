@@ -112,9 +112,9 @@ export function useKeyboardShortcuts(options: KeyboardShortcutsOptions = {}) {
     }
   }, [activeDocument]);
 
-  const defaultNewDocument = useCallback(() => {
+  const defaultNewDocument = useCallback(async () => {
     try {
-      const newDoc = createDocument();
+      const newDoc = await createDocument();
       console.log('📝 New document created via keyboard shortcut:', newDoc.title);
       lastActionRef.current = 'new-document';
     } catch (error) {

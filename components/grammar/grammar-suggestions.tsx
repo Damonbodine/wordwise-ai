@@ -270,7 +270,7 @@ export const GrammarSuggestions: React.FC<GrammarSuggestionsProps> = ({
 
           <TabsContent value="correctness" className="p-4 space-y-3">
             {visibleIssues
-              .filter(i => i.type === 'spelling' || i.type === 'grammar' || i.type === 'punctuation')
+              .filter(i => i.type === 'spelling' || i.type === 'grammar')
               .length === 0 ? (
                 <div className="text-center py-8">
                   <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
@@ -279,7 +279,7 @@ export const GrammarSuggestions: React.FC<GrammarSuggestionsProps> = ({
                 </div>
               ) : (
                 visibleIssues
-                  .filter(i => i.type === 'spelling' || i.type === 'grammar' || i.type === 'punctuation')
+                  .filter(i => i.type === 'spelling' || i.type === 'grammar')
                   .map(issue => (
                     <Card
                       key={issue.id}

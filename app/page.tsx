@@ -8,9 +8,9 @@ import { Input } from '@/components/ui/input'
 import { TextEditor, TextEditorRef } from '@/components/editor/text-editor'
 import { DocumentHeader } from '@/components/editor/document-header'
 import { GrammarSuggestions } from '@/components/grammar/grammar-suggestions'
-// import { ProtectedRoute } from '@/components/auth/protected-route' // Temporarily disabled
+import { ProtectedRoute } from '@/components/auth/protected-route'
 import { useGrammarStore } from '@/stores/grammar-store'
-// import { useAuthStore } from '@/stores/auth-store' // Temporarily disabled
+import { useAuthStore } from '@/stores/auth-store'
 
 function HomePage() {
   const { 
@@ -20,7 +20,7 @@ function HomePage() {
     rejectSuggestion
   } = useGrammarStore();
 
-  // const { user, profile } = useAuthStore(); // Temporarily disabled
+  const { user, profile } = useAuthStore();
   
   // Create ref for the text editor
   const textEditorRef = React.useRef<TextEditorRef>(null);
@@ -127,13 +127,9 @@ function HomePage() {
 }
 
 export default function Home() {
-  // Temporarily bypass auth for testing Accept button functionality
-  return <HomePage />;
-  
-  // TODO: Re-enable auth later:
-  // return (
-  //   <ProtectedRoute>
-  //     <HomePage />
-  //   </ProtectedRoute>
-  // );
+  return (
+    <ProtectedRoute>
+      <HomePage />
+    </ProtectedRoute>
+  );
 } 
