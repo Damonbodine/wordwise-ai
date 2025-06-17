@@ -24,11 +24,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   // Initialize authentication on app start
   useEffect(() => {
-    if (!isInitialized && !authLoading) {
+    if (!isInitialized) {
       console.log('[AUTH PROVIDER] Initializing authentication...');
       initializeAuth();
     }
-  }, [initializeAuth, isInitialized, authLoading]);
+  }, [isInitialized]); // Remove initializeAuth from dependencies to prevent re-runs
 
   // Load user documents when authenticated
   useEffect(() => {

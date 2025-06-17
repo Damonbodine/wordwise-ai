@@ -181,10 +181,26 @@ export const useAuthStore = create<AuthStore>()(
         // Initialize authentication state
         initializeAuth: async () => {
           set({ isLoading: true });
+          console.log('[AUTH] Starting authentication initialization...');
           
           try {
-            // Get current session
-            const { data: sessionData } = await auth.getSession();
+            // Get current session with timeout
+            console.log('[AUTH] Getting session...');
+            
+            const sessionPromise = auth.getSession();
+            const timeoutPromise = new Promise<never>((_, reject) => 
+              setTimeout(() => reject(new Error('Supabase getSession() timed out after 5 seconds')), 5000)
+            );
+            
+            const { data: sessionData, error: sessionError } = await Promise.race([
+              sessionPromise, 
+              timeoutPromise
+            ]);
+            
+            if (sessionError) {
+              console.error('[AUTH] Session error:', sessionError);
+              throw sessionError;
+            }
             
             if (sessionData.session && sessionData.session.user) {
               const user = sessionData.session.user as AuthUser;
@@ -254,15 +270,22 @@ export const useAuthStore = create<AuthStore>()(
         // Sign up with email and password
         signUp: async (email, password, userData = {}) => {
           set({ isLoading: true, error: null });
+          console.log('[AUTH] Starting sign up for:', email);
           
           try {
             const { data, error } = await auth.signUp(email, password, userData);
+            console.log('[AUTH] Sign up response:', { data, error });
             
-            if (error) throw error;
+            if (error) {
+              console.error('[AUTH] Sign up error:', error);
+              throw error;
+            }
             
+            console.log('[AUTH] Sign up successful');
             set({ isLoading: false });
             return { success: true };
           } catch (error: any) {
+            console.error('[AUTH] Sign up failed:', error);
             const errorMessage = error.message || 'Sign up failed';
             set({ isLoading: false, error: errorMessage });
             return { success: false, error: errorMessage };
