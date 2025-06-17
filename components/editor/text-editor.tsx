@@ -9,30 +9,7 @@ import Underline from "@tiptap/extension-underline";
 import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/stores/editor-store";
 import { useDocumentStore } from "@/stores/document-store";
-
-// Debounce utility function with cancel method
-function useDebounce<T extends any[]>(
-  callback: (...args: T) => void,
-  delay: number
-) {
-  const timeoutRef = React.useRef<NodeJS.Timeout>();
-  
-  const debouncedFunction = React.useCallback((...args: T) => {
-    clearTimeout(timeoutRef.current);
-    timeoutRef.current = setTimeout(() => callback(...args), delay);
-  }, [callback, delay]);
-  
-  const cancel = React.useCallback(() => {
-    clearTimeout(timeoutRef.current);
-  }, []);
-  
-  // Attach cancel method to the debounced function
-  React.useEffect(() => {
-    (debouncedFunction as any).cancel = cancel;
-  }, [debouncedFunction, cancel]);
-  
-  return debouncedFunction;
-}
+import { useAutoSave } from "@/hooks/use-auto-save";
 
 interface TextEditorProps {
   className?: string;
@@ -50,25 +27,30 @@ export function TextEditor({
   const {
     currentEditorContent,
     setEditorContent,
-    markUnsaved,
-    markSaved,
     editorSettings,
     setEditorFocus,
     wordCount,
     characterCount,
-    hasUnsavedChanges,
-    lastSaved,
-    isAutoSaving,
-    setAutoSaving,
   } = useEditorStore();
 
   const {
     activeDocument,
     activeDocumentId,
-    updateDocumentContent,
-    setActiveDocument,
     documents,
   } = useDocumentStore();
+
+  // Initialize auto-save hook with 2-second debounce as specified
+  const autoSave = useAutoSave({
+    debounceMs: 2000,
+    enabled: true,
+    maxRetries: 3,
+    onSaveSuccess: (documentId) => {
+      console.log(`✅ Auto-save successful for document: ${documentId}`);
+    },
+    onSaveError: (error, documentId) => {
+      console.error(`❌ Auto-save failed for document ${documentId}:`, error);
+    },
+  });
   
   // Debug the store state
   React.useEffect(() => {
@@ -93,31 +75,9 @@ export function TextEditor({
     return unsubscribe;
   }, []);
 
-  // Debounced save to document store (300ms delay)
-  const debouncedSaveToStore = useDebounce(async (content: string, plainText: string) => {
-    if (activeDocumentId) {
-      setAutoSaving(true);
-      try {
-        updateDocumentContent(activeDocumentId, content, plainText);
-        markSaved(); // Mark as saved in editor store
-        console.log('💾 Auto-saved to document store');
-      } catch (error) {
-        console.error('❌ Auto-save failed:', error);
-      } finally {
-        setAutoSaving(false);
-      }
-    }
-  }, 300);
-
-  // Manual save function
+  // Manual save function using auto-save hook
   const handleManualSave = () => {
-    if (activeDocumentId && hasUnsavedChanges) {
-      const content = editor?.getHTML() || '';
-      const plainText = editor?.getText() || '';
-      updateDocumentContent(activeDocumentId, content, plainText);
-      markSaved();
-      console.log('💾 Manual save completed');
-    }
+    autoSave.saveNow();
   };
 
   // Initialize TipTap editor
@@ -192,8 +152,8 @@ export function TextEditor({
       // Update editor store immediately (real-time) - this calculates all stats
       setEditorContent(html, text);
       
-      // Debounced save to document store (300ms delay)
-      debouncedSaveToStore(html, text);
+      // Trigger auto-save with 2-second debounce
+      autoSave.triggerAutoSave(html, text);
     },
     onFocus: () => {
       setEditorFocus(true);
@@ -262,15 +222,13 @@ export function TextEditor({
     }
   }, [activeDocumentId, editor, documentChangeCounter]);
 
-  // Cleanup debounced function on unmount
+  // Cleanup auto-save on unmount
   React.useEffect(() => {
     return () => {
-      // Clear any pending debounced saves on unmount
-      if (typeof (debouncedSaveToStore as any).cancel === 'function') {
-        (debouncedSaveToStore as any).cancel();
-      }
+      // Cancel any pending auto-save operations on unmount
+      autoSave.cancelPendingSave();
     };
-  }, []);
+  }, [autoSave]);
 
   // Update editor settings when they change
   React.useEffect(() => {
@@ -581,8 +539,18 @@ export function TextEditor({
         </div>
         
         <div className="flex items-center gap-2">
-          {/* Save Status */}
-          {hasUnsavedChanges ? (
+          {/* Save Status with Error Handling */}
+          {autoSave.hasError ? (
+            <div className="flex items-center gap-1 text-red-500" title={autoSave.error || 'Save error'}>
+              <div className="h-1.5 w-1.5 rounded-full bg-red-500" />
+              <span>Error</span>
+            </div>
+          ) : autoSave.isLoading ? (
+            <div className="flex items-center gap-1 text-blue-600">
+              <div className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
+              <span>Saving...</span>
+            </div>
+          ) : autoSave.hasUnsavedChanges ? (
             <div className="flex items-center gap-1 text-orange-500">
               <div className="h-1.5 w-1.5 rounded-full bg-orange-500" />
               <span>Unsaved</span>
@@ -603,21 +571,14 @@ export function TextEditor({
           )}
           
           {/* Auto-save Status */}
-          {isAutoSaving ? (
-            <div className="flex items-center gap-1 text-blue-600">
-              <div className="h-1.5 w-1.5 rounded-full bg-blue-600 animate-pulse" />
-              <span>Saving...</span>
-            </div>
-          ) : (
-            <div className="flex items-center gap-1 text-green-600">
-              <span title="Auto-save enabled (300ms delay)">💾</span>
-              {lastSaved && (
-                <span className="text-xs text-muted-foreground">
-                  {lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </span>
-              )}
-            </div>
-          )}
+          <div className="flex items-center gap-1 text-green-600">
+            <span title="Auto-save enabled (2s delay with retry)">💾</span>
+            {autoSave.lastSaved && (
+              <span className="text-xs text-muted-foreground">
+                {autoSave.lastSaved.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
+            )}
+          </div>
           
           {/* Spell Check Indicator */}
           {editorSettings.behavior.spellCheck && (

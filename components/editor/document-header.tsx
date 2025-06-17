@@ -5,6 +5,7 @@ import { Edit3, FileText, Settings, Save, Clock, Type, Hash } from "lucide-react
 import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/stores/document-store";
 import { useEditorStore } from "@/stores/editor-store";
+import { useAutoSave } from "@/hooks/use-auto-save";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -22,10 +23,12 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
   const {
     wordCount,
     characterCount,
-    hasUnsavedChanges,
-    lastSaved,
-    isAutoSaving,
   } = useEditorStore();
+
+  // Use auto-save hook for consistent status indicators
+  const autoSave = useAutoSave({
+    enabled: false, // DocumentHeader doesn't trigger saves, just displays status
+  });
 
   // Local state for title editing
   const [isEditingTitle, setIsEditingTitle] = React.useState(false);
@@ -200,14 +203,19 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
 
       {/* Right Side - Status and Actions */}
       <div className="flex items-center gap-3">
-        {/* Save Status */}
+        {/* Save Status with Enhanced Error Handling */}
         <div className="flex items-center gap-2 text-sm">
-          {isAutoSaving ? (
+          {autoSave.hasError ? (
+            <div className="flex items-center gap-1 text-red-600" title={autoSave.error || 'Save error'}>
+              <div className="h-2 w-2 rounded-full bg-red-600" />
+              <span className="hidden sm:inline">Error</span>
+            </div>
+          ) : autoSave.isLoading ? (
             <div className="flex items-center gap-1 text-blue-600">
               <div className="h-2 w-2 rounded-full bg-blue-600 animate-pulse" />
               <span className="hidden sm:inline">Saving...</span>
             </div>
-          ) : hasUnsavedChanges ? (
+          ) : autoSave.hasUnsavedChanges ? (
             <div className="flex items-center gap-1 text-orange-600">
               <div className="h-2 w-2 rounded-full bg-orange-600" />
               <span className="hidden sm:inline">Unsaved</span>
@@ -216,9 +224,9 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
             <div className="flex items-center gap-1 text-green-600">
               <div className="h-2 w-2 rounded-full bg-green-600" />
               <span className="hidden sm:inline">Saved</span>
-              {lastSaved && (
+              {autoSave.lastSaved && (
                 <span className="hidden lg:inline text-xs text-muted-foreground ml-1">
-                  {formatLastSaved(lastSaved)}
+                  {formatLastSaved(autoSave.lastSaved)}
                 </span>
               )}
             </div>
