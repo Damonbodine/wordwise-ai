@@ -77,15 +77,37 @@ export const GrammarSuggestions: React.FC<GrammarSuggestionsProps> = ({
     }
   };
 
-  // Get severity color
-  const getSeverityColor = (severity: string) => {
+  // Get color for issue type (category-based color coding)
+  const getTypeColor = (type: string) => {
+    switch (type) {
+      case 'spelling':
+      case 'grammar':
+      case 'punctuation':
+        return 'text-red-700 bg-red-50 border-red-200'; // Correctness = Red
+      case 'clarity':
+        return 'text-blue-700 bg-blue-50 border-blue-200'; // Clarity = Blue
+      case 'engagement':
+        return 'text-purple-700 bg-purple-50 border-purple-200'; // Engagement = Purple
+      case 'delivery':
+        return 'text-green-700 bg-green-50 border-green-200'; // Delivery = Green
+      case 'style':
+        return 'text-indigo-700 bg-indigo-50 border-indigo-200'; // Style = Indigo
+      default:
+        return 'text-gray-600 bg-gray-50 border-gray-200';
+    }
+  };
+
+  // Get severity color (intensity-based within category)
+  const getSeverityColor = (severity: string, type: string) => {
+    const baseColor = getTypeColor(type);
+    
     switch (severity) {
       case 'high':
-        return 'text-red-600 bg-red-50 border-red-200';
+        return baseColor; // Full intensity
       case 'medium':
-        return 'text-amber-600 bg-amber-50 border-amber-200';
+        return baseColor.replace('-700', '-600').replace('-50', '-25'); // Medium intensity
       case 'low':
-        return 'text-blue-600 bg-blue-50 border-blue-200';
+        return baseColor.replace('-700', '-500').replace('-50', '-25'); // Lower intensity
       default:
         return 'text-gray-600 bg-gray-50 border-gray-200';
     }
@@ -164,7 +186,7 @@ export const GrammarSuggestions: React.FC<GrammarSuggestionsProps> = ({
                       <div className="flex items-center gap-2">
                         <div className={cn(
                           "p-1 rounded",
-                          getSeverityColor(issue.severity)
+                          getSeverityColor(issue.severity, issue.type)
                         )}>
                           {getIssueIcon(issue.type)}
                         </div>
@@ -181,7 +203,7 @@ export const GrammarSuggestions: React.FC<GrammarSuggestionsProps> = ({
                         variant="outline" 
                         className={cn(
                           "text-xs",
-                          getSeverityColor(issue.severity)
+                          getSeverityColor(issue.severity, issue.type)
                         )}
                       >
                         {issue.severity}

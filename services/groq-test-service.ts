@@ -45,6 +45,83 @@ export class GroqTestService {
     }
   }
 
+  private getEnhancedSystemPrompt(): string {
+    return `You are an expert writing and grammar assistant with advanced training in linguistic analysis. Your primary focus is on CORRECTNESS - identifying and correcting grammar, spelling, and punctuation errors with surgical precision.
+
+## ANALYSIS FRAMEWORK
+
+### CORRECTNESS PRIORITY (PRIMARY FOCUS)
+1. **Grammar Errors** (High Priority):
+   - Subject-verb disagreement ("The team are" → "The team is")
+   - Incorrect pronoun case ("between you and I" → "between you and me") 
+   - Dangling modifiers ("Walking to the store, the rain started")
+   - Run-on sentences and fragments
+   - Incorrect verb tense consistency
+   - Misplaced apostrophes ("it's" vs "its")
+   - Double negatives ("don't know nothing" → "don't know anything")
+
+2. **Spelling Errors** (High Priority):
+   - Misspelled words (use context for homophones: "there/their/they're")
+   - Typos and character transpositions
+   - Commonly confused words ("effect/affect", "lose/loose")
+
+3. **Punctuation Errors** (Medium Priority):
+   - Missing or incorrect commas in compound sentences
+   - Semicolon misuse
+   - Quotation mark placement
+   - Missing periods or question marks
+
+### SECONDARY ANALYSIS
+4. **Clarity Issues** (Medium Priority):
+   - Ambiguous pronoun references
+   - Unclear sentence structure
+   - Wordiness that obscures meaning
+
+5. **Style & Engagement** (Lower Priority):
+   - Passive voice overuse (when active is clearer)
+   - Repetitive word choice
+   - Weak verb choices
+
+## OUTPUT FORMAT
+Return ONLY valid JSON with this exact structure:
+{
+  "issues": [
+    {
+      "type": "grammar|spelling|punctuation|clarity|style",
+      "category": "Grammar Error|Spelling Error|Punctuation|Clarity|Style",
+      "severity": "high|medium|low",
+      "message": "Concise issue description (max 80 chars)",
+      "explanation": "Why this is incorrect and why the suggestion is better",
+      "originalText": "exact text from input",
+      "suggestedText": "corrected version",
+      "startIndex": 0,
+      "endIndex": 0,
+      "confidence": 0.95
+    }
+  ],
+  "scores": {
+    "correctness": 85,
+    "clarity": 90,
+    "engagement": 75,
+    "delivery": 80
+  }
+}
+
+## SCORING GUIDELINES
+- **Correctness**: 100 = no grammar/spelling/punctuation errors, 90+ = minor issues, 80+ = some errors, <80 = significant problems
+- **Clarity**: How easily understood is the text?
+- **Engagement**: How interesting/compelling is the writing?
+- **Delivery**: How well does tone/style match intent?
+
+## CRITICAL RULES
+- ONLY suggest corrections you are 90%+ confident about
+- For CORRECTNESS issues, always use "high" or "medium" severity
+- Include exact originalText that appears in the input
+- Make suggestedText grammatically perfect
+- Prioritize fixing errors over style preferences
+- Be conservative - don't over-correct stylistic choices`;
+  }
+
   private async performAnalysis(text: string, cacheKey: string): Promise<GrammarAnalysisResult> {
     const startTime = Date.now();
     console.log('[GROQ TEST] Starting analysis for text:', text.substring(0, 50) + '...');
@@ -168,33 +245,82 @@ export class GroqTestService {
     const words = text.trim().split(/\s+/).filter(w => w.length > 0);
     const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
     
-    // Basic fallback grammar checking
+    // Enhanced fallback grammar checking focused on CORRECTNESS
     const issues: any[] = [];
     
-    // Check for some basic issues as fallback
+    // Comprehensive spelling corrections (focused on correctness)
     const commonMisspellings = {
+      // Obvious typos/nonsense words
       'weirjgg': 'weird',
-      'persona': 'person',
+      'teh': 'the',
       'recieve': 'receive',
       'seperate': 'separate',
-      'definately': 'definitely'
+      'definately': 'definitely',
+      'occured': 'occurred',
+      'neccessary': 'necessary',
+      'accomodate': 'accommodate',
+      'embarass': 'embarrass',
+      'maintainance': 'maintenance',
+      'goverment': 'government',
+      'begining': 'beginning',
+      'tommorrow': 'tomorrow',
+      'febuary': 'February',
+      'wendesday': 'Wednesday',
+      'independant': 'independent',
+      'existance': 'existence',
+      'consistant': 'consistent',
+      'differant': 'different',
+      'enviroment': 'environment',
+      'priviledge': 'privilege'
     };
     
+    // Common grammar patterns to check
+    const grammarPatterns = [
+      { pattern: /\bi\s+am\s+went\b/gi, correction: 'I went', type: 'Verb tense error' },
+      { pattern: /\byou\s+was\b/gi, correction: 'you were', type: 'Subject-verb disagreement' },
+      { pattern: /\btheir\s+going\b/gi, correction: 'they\'re going', type: 'Homophone confusion' },
+      { pattern: /\bits\s+raining\b/gi, correction: 'it\'s raining', type: 'Contraction error' },
+      { pattern: /\beffect\s+the\s+change\b/gi, correction: 'affect the change', type: 'Effect/affect confusion' }
+    ];
+    
     let issueId = 0;
+    
+    // Check for spelling errors
     words.forEach((word, index) => {
       const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
       if (commonMisspellings[cleanWord]) {
         issues.push({
-          id: `fallback_${issueId++}`,
+          id: `fallback_spelling_${issueId++}`,
           type: 'spelling',
           category: 'Spelling Error',
-          severity: 'medium',
-          message: `"${word}" may be misspelled`,
-          explanation: `Consider changing "${word}" to "${commonMisspellings[cleanWord]}"`,
+          severity: 'high',
+          message: `"${word}" appears to be misspelled`,
+          explanation: `"${word}" should be "${commonMisspellings[cleanWord]}" for correct spelling`,
           originalText: word,
           suggestedText: commonMisspellings[cleanWord],
           position: { start: 0, end: word.length },
-          confidence: 0.8
+          confidence: 0.9
+        });
+      }
+    });
+    
+    // Check for grammar patterns
+    grammarPatterns.forEach((pattern, index) => {
+      const matches = text.match(pattern.pattern);
+      if (matches) {
+        matches.forEach(match => {
+          issues.push({
+            id: `fallback_grammar_${issueId++}`,
+            type: 'grammar',
+            category: 'Grammar Error',
+            severity: 'high',
+            message: pattern.type,
+            explanation: `"${match.trim()}" contains a grammar error. Use "${pattern.correction}" instead.`,
+            originalText: match.trim(),
+            suggestedText: pattern.correction,
+            position: { start: 0, end: match.length },
+            confidence: 0.85
+          });
         });
       }
     });
