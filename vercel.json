@@ -1,0 +1,12 @@
+{
+  "build": {
+    "env": {
+      "NEXT_TELEMETRY_DISABLED": "1"
+    }
+  },
+  "functions": {
+    "app/**": {
+      "runtime": "nodejs20.x"
+    }
+  }
+}

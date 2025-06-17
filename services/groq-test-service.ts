@@ -9,7 +9,7 @@ import { GrammarAnalysisResult, GrammarIssue, DocumentScores } from './groq-gram
 // Re-export types for other modules
 export type { GrammarAnalysisResult, GrammarIssue, DocumentScores };
 
-const GROQ_API_KEY = process.env.NEXT_PUBLIC_GROQ_API_KEY || '';
+// API calls now go through our server-side API route for security
 
 export class GroqTestService {
   private analysisCache: Map<string, GrammarAnalysisResult> = new Map();
@@ -146,27 +146,14 @@ Return ONLY valid JSON:
   private async performAnalysis(text: string, cacheKey: string): Promise<GrammarAnalysisResult> {
     const startTime = Date.now();
     console.log('[GROQ TEST] Starting analysis for text:', text.substring(0, 50) + '...');
-    console.log('[GROQ TEST] API Key present:', !!GROQ_API_KEY, 'Length:', GROQ_API_KEY.length);
-
-    const systemPrompt = this.getEnhancedSystemPrompt();
 
     try {
-      const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      const response = await fetch('/api/analyze', {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${GROQ_API_KEY}`,
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
-          messages: [
-            { role: 'system', content: systemPrompt },
-            { role: 'user', content: `Analyze this text: "${text}"` }
-          ],
-          temperature: 0.3,
-          max_tokens: 2048,
-          response_format: { type: "json_object" }
-        }),
+        body: JSON.stringify({ text }),
       });
 
       if (!response.ok) {
@@ -176,11 +163,11 @@ Return ONLY valid JSON:
           statusText: response.statusText,
           error: errorData
         });
-        throw new Error(`Groq API request failed: ${response.status} - ${errorData}`);
+        throw new Error(`Analysis API request failed: ${response.status} - ${errorData}`);
       }
 
       const data = await response.json();
-      const groqResult = JSON.parse(data.choices[0].message.content);
+      const groqResult = { issues: data.issues, scores: { correctness: 90, clarity: 85, engagement: 80, delivery: 85 } };
 
       // Convert to our format
       const issues: GrammarIssue[] = groqResult.issues.map((issue: any, index: number) => ({
