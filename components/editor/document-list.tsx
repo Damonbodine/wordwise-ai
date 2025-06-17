@@ -1,13 +1,15 @@
 "use client";
 
 import * as React from "react";
-import { Search, FileText, Calendar, SortAsc, SortDesc, Plus, Heart, Clock } from "lucide-react";
+import { Search, FileText, Calendar, SortAsc, SortDesc, Plus, Heart, Clock, MoreHorizontal, Edit3, Copy, Trash2, Download } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/stores/document-store";
 import { Document } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
+import { ConfirmationDialog } from "@/components/ui/dialog";
+import { DocumentService, DOCUMENT_TEMPLATES } from "@/services/document-service";
 
 type SortOption = "title" | "updatedAt" | "createdAt" | "wordCount";
 type SortDirection = "asc" | "desc";
@@ -23,6 +25,8 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
     activeDocumentId,
     setActiveDocument,
     createDocument,
+    updateDocument,
+    deleteDocument,
     toggleFavorite,
     searchDocuments,
   } = useDocumentStore();
@@ -32,6 +36,13 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
   const [sortBy, setSortBy] = React.useState<SortOption>("updatedAt");
   const [sortDirection, setSortDirection] = React.useState<SortDirection>("desc");
   const [showFavoritesOnly, setShowFavoritesOnly] = React.useState(false);
+
+  // State for document actions
+  const [editingTitleId, setEditingTitleId] = React.useState<string | null>(null);
+  const [editedTitle, setEditedTitle] = React.useState("");
+  const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
+  const [documentToDelete, setDocumentToDelete] = React.useState<Document | null>(null);
+  const [showTemplateMenu, setShowTemplateMenu] = React.useState(false);
 
   // Filter and sort documents
   const filteredAndSortedDocuments = React.useMemo(() => {
@@ -104,12 +115,134 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
     }
   }, [sortBy]);
 
+  // Document action handlers
+  const handleRenameDocument = React.useCallback((document: Document) => {
+    setEditingTitleId(document.id);
+    setEditedTitle(document.title);
+  }, []);
+
+  const handleSaveTitle = React.useCallback(async (documentId: string) => {
+    if (!editedTitle.trim()) return;
+    
+    try {
+      await updateDocument(documentId, { title: editedTitle.trim() });
+      setEditingTitleId(null);
+      setEditedTitle("");
+    } catch (error) {
+      console.error('Failed to update document title:', error);
+    }
+  }, [editedTitle, updateDocument]);
+
+  const handleCancelEdit = React.useCallback(() => {
+    setEditingTitleId(null);
+    setEditedTitle("");
+  }, []);
+
+  const handleDuplicateDocument = React.useCallback(async (document: Document) => {
+    try {
+      const duplicateData = DocumentService.duplicateDocument(document);
+      const newDoc = createDocument(duplicateData.title, duplicateData.content);
+      
+      // Update the newly created document with additional data from duplicate
+      setTimeout(() => {
+        updateDocument(newDoc.id, {
+          tags: duplicateData.tags,
+          stats: duplicateData.stats,
+          settings: duplicateData.settings,
+          analysis: duplicateData.analysis,
+          sharing: duplicateData.sharing,
+          status: duplicateData.status,
+          folderId: duplicateData.folderId,
+          templateId: duplicateData.templateId,
+        });
+      }, 100);
+      
+      console.log('📋 Document duplicated:', newDoc.title);
+    } catch (error) {
+      console.error('Failed to duplicate document:', error);
+    }
+  }, [createDocument, updateDocument]);
+
+  const handleDeleteDocument = React.useCallback((document: Document) => {
+    const validation = DocumentService.canDeleteDocument(document);
+    if (!validation.canDelete) {
+      alert(validation.reason);
+      return;
+    }
+    
+    setDocumentToDelete(document);
+    setDeleteDialogOpen(true);
+  }, []);
+
+  const handleConfirmDelete = React.useCallback(async () => {
+    if (!documentToDelete) return;
+    
+    try {
+      // Prepare backup before deletion
+      const { backupData, auditLog } = DocumentService.prepareForDeletion(documentToDelete);
+      console.log('📦 Document backup created:', auditLog);
+      
+      deleteDocument(documentToDelete.id);
+      
+      setDocumentToDelete(null);
+      setDeleteDialogOpen(false);
+    } catch (error) {
+      console.error('Failed to delete document:', error);
+    }
+  }, [documentToDelete, deleteDocument]);
+
+  const handleExportDocument = React.useCallback((document: Document, format: 'txt' | 'md' | 'html' | 'json' = 'txt') => {
+    try {
+      DocumentService.downloadDocument(document, format);
+    } catch (error) {
+      console.error('Failed to export document:', error);
+    }
+  }, []);
+
+  const handleCreateFromTemplate = React.useCallback((templateKey: keyof typeof DOCUMENT_TEMPLATES) => {
+    try {
+      const templateData = DocumentService.createNewDocument(templateKey);
+      const newDoc = createDocument(templateData.title, templateData.content);
+      
+      // Update the newly created document with additional data from template
+      setTimeout(() => {
+        updateDocument(newDoc.id, {
+          tags: templateData.tags,
+          stats: templateData.stats,
+          settings: templateData.settings,
+          analysis: templateData.analysis,
+          sharing: templateData.sharing,
+          status: templateData.status,
+        });
+      }, 100);
+      
+      console.log('📋 Document created from template:', templateKey, newDoc.title);
+      onDocumentSelect?.(newDoc.id);
+      setShowTemplateMenu(false);
+    } catch (error) {
+      console.error('Failed to create document from template:', error);
+    }
+  }, [createDocument, updateDocument, onDocumentSelect]);
+
   // Format date for display (client-side only to prevent hydration errors)
   const [isClient, setIsClient] = React.useState(false);
   
   React.useEffect(() => {
     setIsClient(true);
   }, []);
+
+  // Close template menu when clicking outside
+  React.useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (showTemplateMenu && !target.closest('.template-menu-container')) {
+        setShowTemplateMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [showTemplateMenu]);
 
   const formatDate = React.useCallback((dateString: string) => {
     if (!isClient) {
@@ -144,14 +277,100 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
       {/* Header with New Document Button */}
       <div className="flex items-center justify-between p-4 border-b border-border">
         <h2 className="text-lg font-semibold">Documents</h2>
-        <Button
-          onClick={handleCreateDocument}
-          size="sm"
-          className="flex items-center gap-2"
-        >
-          <Plus className="w-4 h-4" />
-          New
-        </Button>
+        <div className="relative template-menu-container">
+          <Button
+            onClick={() => setShowTemplateMenu(!showTemplateMenu)}
+            size="sm"
+            className="flex items-center gap-2"
+          >
+            <Plus className="w-4 h-4" />
+            New
+          </Button>
+          
+          {/* Template Selection Menu */}
+          {showTemplateMenu && (
+            <div className="absolute right-0 top-full mt-2 w-64 bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
+              <div className="p-2">
+                <div className="text-xs font-medium text-muted-foreground mb-2 px-2">Content Templates</div>
+                
+                {/* Quick blank document */}
+                <button
+                  onClick={() => handleCreateFromTemplate('blank')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md flex items-center gap-3"
+                >
+                  <FileText className="w-4 h-4 text-muted-foreground" />
+                  <div>
+                    <div className="font-medium">Blank Document</div>
+                    <div className="text-xs text-muted-foreground">Start from scratch</div>
+                  </div>
+                </button>
+                
+                <div className="border-t my-2"></div>
+                
+                {/* Social Media Templates */}
+                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Social Media</div>
+                <button
+                  onClick={() => handleCreateFromTemplate('twitterThread')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
+                >
+                  🧵 Twitter/X Thread
+                </button>
+                <button
+                  onClick={() => handleCreateFromTemplate('linkedinPost')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
+                >
+                  💼 LinkedIn Post
+                </button>
+                <button
+                  onClick={() => handleCreateFromTemplate('instagramCaption')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
+                >
+                  📸 Instagram Caption
+                </button>
+                
+                <div className="border-t my-2"></div>
+                
+                {/* Video Content */}
+                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Video Content</div>
+                <button
+                  onClick={() => handleCreateFromTemplate('youtubeScript')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
+                >
+                  🎬 YouTube Script
+                </button>
+                <button
+                  onClick={() => handleCreateFromTemplate('youtubeDescription')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
+                >
+                  📺 YouTube Description
+                </button>
+                
+                <div className="border-t my-2"></div>
+                
+                {/* Marketing */}
+                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Marketing</div>
+                <button
+                  onClick={() => handleCreateFromTemplate('emailNewsletter')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
+                >
+                  📧 Email Newsletter
+                </button>
+                <button
+                  onClick={() => handleCreateFromTemplate('seoBlogPost')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
+                >
+                  📝 SEO Blog Post
+                </button>
+                <button
+                  onClick={() => handleCreateFromTemplate('contentBrief')}
+                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
+                >
+                  📋 Content Brief
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Search and Filters */}
@@ -245,9 +464,29 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
                   {/* Document Header */}
                   <div className="flex items-start justify-between mb-2">
                     <div className="flex-1 min-w-0">
-                      <h4 className="font-medium truncate group-hover:text-primary transition-colors">
-                        {document.title}
-                      </h4>
+                      {editingTitleId === document.id ? (
+                        <div className="flex items-center gap-2">
+                          <Input
+                            value={editedTitle}
+                            onChange={(e) => setEditedTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              e.stopPropagation();
+                              if (e.key === 'Enter') {
+                                handleSaveTitle(document.id);
+                              } else if (e.key === 'Escape') {
+                                handleCancelEdit();
+                              }
+                            }}
+                            onBlur={() => handleSaveTitle(document.id)}
+                            className="text-sm font-medium"
+                            autoFocus
+                          />
+                        </div>
+                      ) : (
+                        <h4 className="font-medium truncate group-hover:text-primary transition-colors">
+                          {document.title}
+                        </h4>
+                      )}
                       <div className="flex items-center gap-4 mt-1 text-xs text-muted-foreground">
                         <span className="flex items-center gap-1">
                           <Calendar className="w-3 h-3" />
@@ -259,8 +498,9 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
                       </div>
                     </div>
 
-                    {/* Actions */}
+                    {/* Quick Actions */}
                     <div className="flex items-center gap-1 ml-2">
+                      {/* Favorite */}
                       <Button
                         variant="ghost"
                         size="sm"
@@ -269,6 +509,7 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
                           toggleFavorite(document.id);
                         }}
                         className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Toggle favorite"
                       >
                         <Heart
                           className={cn(
@@ -276,6 +517,62 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
                             document.isFavorite && "fill-red-500 text-red-500"
                           )}
                         />
+                      </Button>
+
+                      {/* Rename */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleRenameDocument(document);
+                        }}
+                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Rename document"
+                      >
+                        <Edit3 className="w-4 h-4" />
+                      </Button>
+
+                      {/* Duplicate */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDuplicateDocument(document);
+                        }}
+                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Duplicate document"
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+
+                      {/* Export */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleExportDocument(document, 'txt');
+                        }}
+                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity"
+                        title="Export as text file"
+                      >
+                        <Download className="w-4 h-4" />
+                      </Button>
+
+                      {/* Delete */}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleDeleteDocument(document);
+                        }}
+                        className="w-8 h-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity text-destructive hover:text-destructive"
+                        title="Delete document"
+                      >
+                        <Trash2 className="w-4 h-4" />
                       </Button>
                     </div>
                   </div>
@@ -338,6 +635,22 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
           </p>
         </div>
       )}
+
+      {/* Delete Confirmation Dialog */}
+      <ConfirmationDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        title="Delete Document"
+        description={`Are you sure you want to delete "${documentToDelete?.title}"? This action cannot be undone.`}
+        confirmLabel="Delete"
+        cancelLabel="Cancel"
+        variant="destructive"
+        onConfirm={handleConfirmDelete}
+        onCancel={() => {
+          setDocumentToDelete(null);
+          setDeleteDialogOpen(false);
+        }}
+      />
     </div>
   );
 }

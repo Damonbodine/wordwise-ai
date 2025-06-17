@@ -10,20 +10,28 @@ import { cn } from "@/lib/utils";
 import { useEditorStore } from "@/stores/editor-store";
 import { useDocumentStore } from "@/stores/document-store";
 import { useAutoSave } from "@/hooks/use-auto-save";
+import { useGrammarStore } from "@/stores/grammar-store";
 
 interface TextEditorProps {
   className?: string;
   placeholder?: string;
   editable?: boolean;
   autofocus?: boolean;
+  onApplyTextReplacement?: (replacement: { originalText: string; suggestedText: string }) => void;
 }
 
-export function TextEditor({
+// Export ref interface for parent components
+export interface TextEditorRef {
+  applyTextReplacement: (replacement: { originalText: string; suggestedText: string }) => boolean;
+}
+
+export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
   className,
   placeholder = "Start writing your thoughts...",
   editable = true,
   autofocus = true,
-}: TextEditorProps) {
+  onApplyTextReplacement,
+}, ref) => {
   const {
     currentEditorContent,
     setEditorContent,
@@ -39,6 +47,12 @@ export function TextEditor({
     documents,
   } = useDocumentStore();
 
+  // Initialize grammar analysis store
+  const {
+    analyzeText,
+    isAnalyzing,
+  } = useGrammarStore();
+
   // Initialize auto-save hook with 2-second debounce as specified
   const autoSave = useAutoSave({
     debounceMs: 2000,
@@ -51,6 +65,59 @@ export function TextEditor({
       console.error(`❌ Auto-save failed for document ${documentId}:`, error);
     },
   });
+
+  // Smart grammar analysis with rate limit prevention
+  const grammarAnalysisTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  const lastAnalyzedTextRef = React.useRef<string>('');
+  const lastAnalysisTimeRef = React.useRef<number>(0);
+  
+  const triggerGrammarAnalysis = React.useCallback((text: string) => {
+    if (!text.trim()) {
+      return;
+    }
+    
+    const now = Date.now();
+    const timeSinceLastAnalysis = now - lastAnalysisTimeRef.current;
+    const textLengthDiff = Math.abs(text.length - lastAnalyzedTextRef.current.length);
+    
+    // Smart triggering rules to avoid rate limits
+    const shouldAnalyze = 
+      // Significant content change (10+ characters)
+      textLengthDiff >= 10 ||
+      // Sentence completion (ends with punctuation)
+      /[.!?]\s*$/.test(text.trim()) ||
+      // Long pause in typing (10+ seconds)
+      timeSinceLastAnalysis > 10000 ||
+      // First analysis
+      lastAnalyzedTextRef.current === '';
+    
+    if (!shouldAnalyze) {
+      console.log('[GRAMMAR] Skipping analysis - minor change or recent analysis');
+      return;
+    }
+    
+    // Clear existing timeout
+    if (grammarAnalysisTimeoutRef.current) {
+      clearTimeout(grammarAnalysisTimeoutRef.current);
+    }
+    
+    // Debounce for 2 seconds after smart trigger
+    grammarAnalysisTimeoutRef.current = setTimeout(() => {
+      // Limit text length to save tokens (max 500 chars)
+      const analysisText = text.length > 500 ? text.substring(0, 500) + '...' : text;
+      
+      console.log('[GRAMMAR] Smart analysis trigger:', {
+        textLength: text.length,
+        analysisLength: analysisText.length,
+        lengthDiff: textLengthDiff,
+        timeSinceLastAnalysis: timeSinceLastAnalysis
+      });
+      
+      lastAnalyzedTextRef.current = text;
+      lastAnalysisTimeRef.current = Date.now();
+      analyzeText(analysisText, activeDocumentId);
+    }, 2000);
+  }, [analyzeText, activeDocumentId]);
   
   // Debug the store state
   React.useEffect(() => {
@@ -165,6 +232,10 @@ export function TextEditor({
       // Only trigger auto-save if not initializing and content has actually changed
       if (!isInitializing && hasInitializedRef.current) {
         autoSave.triggerAutoSave(html, text);
+        
+        // Trigger grammar analysis on text changes (debounced)
+        console.log('🔄 Text changed, triggering grammar analysis for:', text.slice(0, 50) + '...');
+        triggerGrammarAnalysis(text);
       }
     },
     onFocus: () => {
@@ -222,6 +293,11 @@ export function TextEditor({
         setTimeout(() => {
           setIsInitializing(false);
           hasInitializedRef.current = true;
+          
+          // Trigger initial grammar analysis for loaded document
+          if (currentActiveDocument.plainText) {
+            triggerGrammarAnalysis(currentActiveDocument.plainText);
+          }
         }, 100);
         
         // Focus editor for empty documents
@@ -246,11 +322,16 @@ export function TextEditor({
     }
   }, [activeDocumentId, editor, documentChangeCounter]);
 
-  // Cleanup auto-save on unmount
+  // Cleanup auto-save and grammar analysis on unmount
   React.useEffect(() => {
     return () => {
       // Cancel any pending auto-save operations on unmount
       autoSave.cancelPendingSave();
+      
+      // Cancel any pending grammar analysis
+      if (grammarAnalysisTimeoutRef.current) {
+        clearTimeout(grammarAnalysisTimeoutRef.current);
+      }
     };
   }, []); // Empty dependency array - only run on unmount
 
@@ -318,6 +399,55 @@ export function TextEditor({
       document.removeEventListener('keydown', handleKeyDown);
     };
   }, [editor]);
+
+  // Function to apply text replacement directly to TipTap editor
+  const applyTextReplacement = React.useCallback((replacement: { originalText: string; suggestedText: string }) => {
+    if (!editor) {
+      console.warn('[TEXT EDITOR] Cannot apply replacement: editor not ready');
+      return false;
+    }
+
+    try {
+      const currentContent = editor.getHTML();
+      
+      // Find and replace the original text with suggested text
+      if (currentContent.includes(replacement.originalText)) {
+        const updatedContent = currentContent.replace(replacement.originalText, replacement.suggestedText);
+        
+        // Update the editor content
+        editor.commands.setContent(updatedContent);
+        
+        // Update the editor store
+        const plainText = editor.getText();
+        setEditorContent(updatedContent, plainText);
+        
+        // Trigger auto-save
+        if (!isInitializing && hasInitializedRef.current) {
+          autoSave.triggerAutoSave(updatedContent, plainText);
+        }
+        
+        console.log('[TEXT EDITOR] Applied text replacement:', replacement.originalText, '→', replacement.suggestedText);
+        
+        // Call the callback if provided
+        if (onApplyTextReplacement) {
+          onApplyTextReplacement(replacement);
+        }
+        
+        return true;
+      } else {
+        console.warn('[TEXT EDITOR] Original text not found for replacement:', replacement.originalText);
+        return false;
+      }
+    } catch (error) {
+      console.error('[TEXT EDITOR] Failed to apply text replacement:', error);
+      return false;
+    }
+  }, [editor, setEditorContent, autoSave, isInitializing, onApplyTextReplacement]);
+
+  // Expose the applyTextReplacement method via ref
+  React.useImperativeHandle(ref, () => ({
+    applyTextReplacement
+  }), [applyTextReplacement]);
 
   if (!editor) {
     return (
@@ -604,6 +734,20 @@ export function TextEditor({
             )}
           </div>
           
+          {/* Grammar Analysis Indicator */}
+          <div className="flex items-center gap-1">
+            {isAnalyzing ? (
+              <>
+                <div className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />
+                <span className="text-blue-600">Analyzing</span>
+                </>
+              ) : (
+                <span title="Grammar analysis enabled" className="text-green-600">
+                  🔍 Grammar
+                </span>
+              )}
+          </div>
+          
           {/* Spell Check Indicator */}
           {editorSettings.behavior.spellCheck && (
             <span title="Spell check enabled">
@@ -614,4 +758,6 @@ export function TextEditor({
       </div>
     </div>
   );
-} 
+});
+
+TextEditor.displayName = 'TextEditor'; 

@@ -1,13 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Edit3, FileText, Settings, Save, Clock, Type, Hash } from "lucide-react";
+import { Edit3, FileText, Settings, Save, Clock, Type, Hash, Keyboard } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useDocumentStore } from "@/stores/document-store";
 import { useEditorStore } from "@/stores/editor-store";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { KeyboardShortcutsTooltip } from "@/components/ui/keyboard-shortcuts-tooltip";
 
 interface DocumentHeaderProps {
   className?: string;
@@ -24,6 +25,7 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
     wordCount,
     characterCount,
   } = useEditorStore();
+
 
   // Use auto-save hook for consistent status indicators
   const autoSave = useAutoSave({
@@ -202,7 +204,7 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
       </div>
 
       {/* Right Side - Status and Actions */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2">
         {/* Save Status with Enhanced Error Handling */}
         <div className="flex items-center gap-2 text-sm">
           {autoSave.hasError ? (
@@ -232,6 +234,18 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
             </div>
           )}
         </div>
+
+        {/* Keyboard Shortcuts Help - Interactive Tooltip */}
+        <KeyboardShortcutsTooltip>
+          <Button
+            size="sm"
+            variant="secondary"
+            className="h-8 px-2 text-xs font-medium hover:bg-secondary/80 transition-colors"
+          >
+            <Keyboard className="w-3 h-3 mr-1" />
+            <span className="hidden md:inline">Shortcuts</span>
+          </Button>
+        </KeyboardShortcutsTooltip>
 
         {/* Settings Dropdown Placeholder */}
         <Button

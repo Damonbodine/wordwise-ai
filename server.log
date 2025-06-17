@@ -1,0 +1,17 @@
+
+> wordwise-ai@0.1.0 dev
+> next dev
+
+   ▲ Next.js 15.3.3
+   - Local:        http://localhost:3000
+   - Network:      http://192.168.1.66:3000
+   - Environments: .env.local
+
+ ✓ Starting...
+ ✓ Ready in 1276ms
+ ○ Compiling / ...
+ ✓ Compiled / in 3.8s (1211 modules)
+[SUCCESS] Browser-based spell checker initialized
+ GET / 200 in 4178ms
+ ✓ Compiled in 223ms (556 modules)
+[?25h

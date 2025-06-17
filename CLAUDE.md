@@ -206,3 +206,59 @@ For security questions or incidents:
 ---
 
 **Remember: Security is not optional. Every commit should be secure by default.**
+
+---
+
+## 🤖 GROQ API RATE LIMIT MANAGEMENT
+
+### **Rate Limit Constraints (Free Tier)**
+- **6,000 tokens per minute (TPM)**
+- **30 requests per minute (RPM)**  
+- **14,400 tokens per day**
+- Each grammar analysis uses ~400 tokens
+
+### **Smart Grammar Triggering Strategy**
+To avoid rate limiting, we implement intelligent analysis triggers:
+
+#### **Analysis Triggers (Option B - Balanced Approach)**
+```typescript
+// Only analyze when:
+1. Significant content change (10+ characters)
+2. Sentence completion (ends with ., !, ?)
+3. Long pause in typing (10+ seconds)
+4. First analysis of session
+
+// Skip analysis for:
+- Single character changes
+- Minor edits
+- Rapid typing sequences
+```
+
+#### **Token Conservation**
+- **Text Length Limit**: Max 500 characters per request
+- **Aggressive Caching**: Avoid re-analyzing same content
+- **Debouncing**: 2-second delay after trigger
+- **Smart Fallback**: Basic grammar check when API fails
+
+#### **Rate Limit Recovery**
+- **Exponential backoff** when hitting 429 errors
+- **Enhanced fallback** with offline grammar checking
+- **Queue requests** during rate limit periods
+
+### **Monitoring & Debugging**
+```bash
+# Watch for rate limit warnings in console:
+[GROQ TEST] Rate limited - using enhanced fallback
+[GRAMMAR] Smart analysis trigger: { textLength: 245, analysisLength: 245 }
+[GRAMMAR] Skipping analysis - minor change or recent analysis
+```
+
+### **Future Upgrade Options**
+- **Pro Tier ($20/month)**: 300,000 TPM, 6,000 RPM
+- **Pay-as-you-go**: $0.59 per 1M tokens
+- **Enterprise**: Custom limits
+
+### **Implementation Files**
+- `components/editor/text-editor.tsx` - Smart triggering logic
+- `services/groq-test-service.ts` - Rate limit handling & fallback
+- `stores/grammar-store.ts` - Caching & state management

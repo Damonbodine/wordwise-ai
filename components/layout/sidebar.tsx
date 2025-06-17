@@ -114,30 +114,6 @@ export function Sidebar({
             </Button>
           </div>
 
-          {/* New Document Button */}
-          <div className="p-4">
-            <Button
-              className={cn("w-full", isCollapsed && "px-2")}
-              onClick={handleCreateDocument}
-              aria-label="Create new document"
-            >
-              <svg
-                className="h-4 w-4"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-                xmlns="http://www.w3.org/2000/svg"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M12 4v16m8-8H4"
-                />
-              </svg>
-              {!isCollapsed && <span className="ml-2">New Document</span>}
-            </Button>
-          </div>
 
           {/* Document List */}
           <div className="flex-1 overflow-hidden">
