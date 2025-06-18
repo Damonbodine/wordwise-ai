@@ -184,18 +184,16 @@ export const useAuthStore = create<AuthStore>()(
           console.log('[AUTH] Starting authentication initialization...');
           
           try {
-            // Get current session with timeout
+            // Get current session directly from supabase client
             console.log('[AUTH] Getting session...');
+            console.log('[AUTH] Environment:', {
+              isClient: typeof window !== 'undefined',
+              hasUrl: !!process.env.NEXT_PUBLIC_SUPABASE_URL,
+              hasKey: !!process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            });
             
-            const sessionPromise = auth.getSession();
-            const timeoutPromise = new Promise<never>((_, reject) => 
-              setTimeout(() => reject(new Error('Supabase getSession() timed out after 5 seconds')), 5000)
-            );
-            
-            const { data: sessionData, error: sessionError } = await Promise.race([
-              sessionPromise, 
-              timeoutPromise
-            ]);
+            const { data: sessionData, error: sessionError } = await supabase.auth.getSession();
+            console.log('[AUTH] Session call completed:', { sessionData, sessionError });
             
             if (sessionError) {
               console.error('[AUTH] Session error:', sessionError);

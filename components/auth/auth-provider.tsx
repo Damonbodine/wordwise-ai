@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.log('[AUTH PROVIDER] Initializing authentication...');
       initializeAuth();
     }
-  }, [isInitialized]); // Remove initializeAuth from dependencies to prevent re-runs
+  }, []); // Run only once on mount
 
   // Load user documents when authenticated
   useEffect(() => {
