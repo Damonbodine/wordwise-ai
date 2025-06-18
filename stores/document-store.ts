@@ -25,10 +25,13 @@ interface DocumentStore {
   error: string | null;
   isInitialized: boolean;
 
-  // Computed getters
+  // Computed values (updated via updateDocumentCounts)
   activeDocument: Document | null;
   documentCount: number;
   totalWordCount: number;
+  
+  // Helper to update counts
+  updateDocumentCounts: () => void;
 
   // Database Actions (async)
   loadUserDocuments: (userId: string) => Promise<void>;
@@ -216,20 +219,27 @@ export const useDocumentStore = create<DocumentStore>()(
       error: null,
       isInitialized: false,
 
-      // Computed getters
+      // Computed getters as properties
       get activeDocument() {
         const { documents, activeDocumentId } = get();
         return activeDocumentId ? documents.find(doc => doc.id === activeDocumentId) || null : null;
       },
 
-      get documentCount() {
-        return get().documents.filter(doc => !doc.isArchived).length;
-      },
-
-      get totalWordCount() {
-        return get().documents
-          .filter(doc => !doc.isArchived)
-          .reduce((total, doc) => total + doc.stats.wordCount, 0);
+      // These need to be accessed as functions, not properties
+      documentCount: 0,  // Will be updated when documents change
+      totalWordCount: 0, // Will be updated when documents change
+      
+      // Helper function to update counts
+      updateDocumentCounts: () => {
+        const { documents } = get();
+        const nonArchivedDocs = documents.filter(doc => !doc.isArchived);
+        const count = nonArchivedDocs.length;
+        const wordCount = nonArchivedDocs.reduce((total, doc) => total + (doc.stats?.wordCount || 0), 0);
+        
+        set({
+          documentCount: count,
+          totalWordCount: wordCount
+        });
       },
 
       // Database Actions
@@ -246,6 +256,9 @@ export const useDocumentStore = create<DocumentStore>()(
             isInitialized: true,
             activeDocumentId: documents.length > 0 ? documents[0].id : null
           });
+          
+          // Update document counts
+          get().updateDocumentCounts();
           
           console.log('[DOC STORE] Loaded documents:', documents.length);
         } catch (error) {
@@ -280,6 +293,9 @@ export const useDocumentStore = create<DocumentStore>()(
             activeDocumentId: newDocument.id,
             isLoading: false,
           }));
+          
+          // Update counts
+          get().updateDocumentCounts();
 
           console.log('[DOC STORE] Document created successfully:', newDocument.id);
           return newDocument;
@@ -439,6 +455,9 @@ export const useDocumentStore = create<DocumentStore>()(
               : doc
           ),
         }));
+        
+        // Update counts since word count may have changed
+        get().updateDocumentCounts();
       },
 
       updateDocumentTitle: (id, title) => {

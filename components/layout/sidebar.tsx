@@ -39,16 +39,12 @@ export function Sidebar({
     documents, 
     activeDocumentId, 
     documentCount, 
-    totalWordCount,
     createDocument, 
     setActiveDocument,
     getRecentDocuments 
   } = useDocumentStore();
   
   const recentDocuments = getRecentDocuments(6);
-  const grammarScore = documents.length > 0 
-    ? Math.round(documents.reduce((sum, doc) => sum + doc.analysis.grammarScore, 0) / documents.length)
-    : 100;
 
   const handleCreateDocument = async () => {
     try {
@@ -86,9 +82,21 @@ export function Sidebar({
       >
         <div className="flex h-full flex-col">
           {/* Header with Toggle */}
-          <div className="flex items-center justify-between border-b p-4">
+          <div className="flex items-center justify-between border-b p-4 bg-gradient-to-r from-background via-background/95 to-background/90">
             {!isCollapsed && (
-              <h2 className="text-lg font-semibold">Documents</h2>
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center w-6 h-6 rounded-md bg-primary/10 text-primary">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
+                  </svg>
+                </div>
+                <div className="flex flex-col">
+                  <h2 className="text-lg font-semibold leading-none">Documents</h2>
+                  <span className="text-xs text-muted-foreground mt-0.5">
+                    {documentCount} items
+                  </span>
+                </div>
+              </div>
             )}
             <Button
               variant="ghost"
@@ -162,62 +170,6 @@ export function Sidebar({
             )}
           </div>
 
-          {/* Statistics Section */}
-          <div className="border-t p-4">
-            {!isCollapsed ? (
-              <div className="space-y-3">
-                <h3 className="text-sm font-medium text-muted-foreground">Statistics</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-lg bg-muted p-3">
-                    <div className="text-lg font-semibold">{documentCount}</div>
-                    <div className="text-xs text-muted-foreground">Documents</div>
-                  </div>
-                  <div className="rounded-lg bg-muted p-3">
-                    <div className="text-lg font-semibold">
-                      {totalWordCount > 1000 
-                        ? `${(totalWordCount / 1000).toFixed(1)}K` 
-                        : totalWordCount.toLocaleString()
-                      }
-                    </div>
-                    <div className="text-xs text-muted-foreground">Words</div>
-                  </div>
-                </div>
-                <div className="rounded-lg bg-muted p-3">
-                  <div className="text-lg font-semibold">{grammarScore}%</div>
-                  <div className="text-xs text-muted-foreground">Grammar Score</div>
-                </div>
-              </div>
-            ) : (
-              <div className="flex flex-col items-center space-y-2">
-                <div
-                  className="rounded-lg bg-muted p-2"
-                  title={`${documentCount} Documents • ${totalWordCount > 1000 ? `${(totalWordCount / 1000).toFixed(1)}K` : totalWordCount} Words`}
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2M18,20H6V4H13V9H18V20Z" />
-                  </svg>
-                </div>
-                <div
-                  className="rounded-lg bg-muted p-2"
-                  title={`Grammar Score: ${grammarScore}%`}
-                >
-                  <svg
-                    className="h-4 w-4"
-                    fill="currentColor"
-                    viewBox="0 0 24 24"
-                    xmlns="http://www.w3.org/2000/svg"
-                  >
-                    <path d="M12,2A10,10 0 0,1 22,12A10,10 0 0,1 12,22A10,10 0 0,1 2,12A10,10 0 0,1 12,2M11,16.5L18,9.5L16.59,8.09L11,13.67L7.91,10.59L6.5,12L11,16.5Z" />
-                  </svg>
-                </div>
-              </div>
-            )}
-          </div>
         </div>
       </aside>
     </>

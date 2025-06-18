@@ -209,6 +209,76 @@ For security questions or incidents:
 
 ---
 
+## 🚨 TEMPORARY DEVELOPMENT MODE - AUTHENTICATION BYPASS
+
+### **Current Status (as of 2025-01-18)**
+Authentication is **TEMPORARILY BYPASSED** for UI development. The following changes have been made:
+
+#### **Changes Made:**
+1. **`app/page.tsx`**: Removed `<ProtectedRoute>` wrapper
+   ```tsx
+   // BEFORE: export default function Home() { return <ProtectedRoute><HomePage /></ProtectedRoute>; }
+   export default function Home() { return <HomePage />; }
+   ```
+
+2. **`app/page.tsx`**: Disabled auth store usage
+   ```tsx
+   // const { user, profile } = useAuthStore();
+   const user = null;
+   const profile = null;
+   ```
+
+3. **`components/layout/header.tsx`**: Mock user profile display
+   ```tsx
+   {user || true ? (  // Always show user profile
+   // Shows "Dev User" and "developer@wordwise.ai" when no real user
+   ```
+
+4. **`components/auth/auth-provider.tsx`**: Auto-loads mock documents
+   - Tries to load with UUID: `00000000-0000-0000-0000-000000000001`
+   - Falls back to mock data when database fails (expected behavior)
+
+5. **`stores/document-store.ts`**: Uses `initialDocuments` mock data as fallback
+
+#### **Expected Console Messages (NOT ERRORS):**
+- `Failed to fetch documents: invalid input syntax for type uuid`
+- `[DOC STORE] Using mock data as fallback`
+- These are EXPECTED when bypassing auth - the app falls back to mock data
+
+### **🔴 TO RE-ENABLE AUTHENTICATION:**
+1. **Restore `app/page.tsx`**:
+   ```tsx
+   export default function Home() {
+     return (
+       <ProtectedRoute>
+         <HomePage />
+       </ProtectedRoute>
+     );
+   }
+   ```
+
+2. **Re-enable auth store in `app/page.tsx`**:
+   ```tsx
+   const { user, profile } = useAuthStore();
+   // Remove: const user = null; const profile = null;
+   ```
+
+3. **Fix header component** - Remove `|| true` checks:
+   ```tsx
+   {user ? (  // Remove the "|| true" part
+   ```
+
+4. **Restore original auth provider logic** (remove mock data loading)
+
+5. **Test thoroughly** - Ensure auth flow works end-to-end
+
+### **⚠️ IMPORTANT:**
+- **NEVER COMMIT** these auth bypass changes to production
+- Always re-enable authentication before deployment
+- The mock data fallback is intentional for development only
+
+---
+
 ## 🤖 GROQ API RATE LIMIT MANAGEMENT
 
 ### **Rate Limit Constraints (Free Tier)**

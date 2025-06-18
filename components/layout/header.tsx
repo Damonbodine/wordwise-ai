@@ -4,6 +4,7 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { useAuthStore } from "@/stores/auth-store";
+import { useDocumentStore } from "@/stores/document-store";
 import { useRouter } from "next/navigation";
 
 interface HeaderProps {
@@ -16,6 +17,17 @@ export function Header({ onMobileMenuToggle, className }: HeaderProps) {
   const { user, profile, signOut, hasActiveSubscription } = useAuthStore();
   const router = useRouter();
   const dropdownRef = React.useRef<HTMLDivElement>(null);
+  
+  // Use individual selectors to avoid creating new objects
+  const documents = useDocumentStore((state) => state.documents);
+  const documentCount = useDocumentStore((state) => state.documentCount);
+  const totalWordCount = useDocumentStore((state) => state.totalWordCount);
+  
+  // Calculate grammar score
+  const grammarScore = documents.length > 0 
+    ? Math.round(documents.reduce((sum, doc) => sum + (doc.analysis?.grammarScore || 100), 0) / documents.length)
+    : 100;
+
 
   // Close dropdown when clicking outside
   React.useEffect(() => {
@@ -76,27 +88,41 @@ export function Header({ onMobileMenuToggle, className }: HeaderProps) {
           </div>
         </div>
 
-        {/* Center Section: Navigation Menu (Desktop) */}
-        <nav className="hidden md:flex items-center space-x-6">
-          <a
-            href="#"
-            className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-          >
-            Dashboard
-          </a>
-          <a
-            href="#"
-            className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-          >
-            Documents
-          </a>
-          <a
-            href="#"
-            className="text-sm font-medium text-foreground/80 hover:text-foreground transition-colors"
-          >
-            Settings
-          </a>
-        </nav>
+        {/* Center Section: Stats */}
+        <div className="hidden md:flex items-center gap-3">
+          {/* Documents Count */}
+          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-br from-primary/5 to-primary/10 border border-primary/20 px-3 py-1.5 transition-all hover:shadow-sm">
+            <div className="text-sm font-bold text-primary">{documentCount}</div>
+            <svg className="w-3 h-3 text-primary/60" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M14,2H6A2,2 0 0,0 4,4V20A2,2 0 0,0 6,22H18A2,2 0 0,0 20,20V8L14,2Z" />
+            </svg>
+            <span className="text-xs text-muted-foreground">Docs</span>
+          </div>
+
+          {/* Words Count */}
+          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-br from-blue-50 to-blue-100 border border-blue-200 px-3 py-1.5 transition-all hover:shadow-sm dark:from-blue-950 dark:to-blue-900 dark:border-blue-800">
+            <div className="text-sm font-bold text-blue-700 dark:text-blue-300">
+              {totalWordCount > 1000 
+                ? `${(totalWordCount / 1000).toFixed(1)}K` 
+                : totalWordCount.toLocaleString()
+              }
+            </div>
+            <svg className="w-3 h-3 text-blue-500" fill="currentColor" viewBox="0 0 24 24">
+              <path d="M3,3H21V5H3V3M3,7H15V9H3V7M3,11H21V13H3V11M3,15H15V17H3V15M3,19H21V21H3V19Z" />
+            </svg>
+            <span className="text-xs text-muted-foreground">Words</span>
+          </div>
+
+          {/* Grammar Score */}
+          <div className="flex items-center gap-2 rounded-lg bg-gradient-to-br from-green-50 to-green-100 border border-green-200 px-3 py-1.5 transition-all hover:shadow-sm dark:from-green-950 dark:to-green-900 dark:border-green-800">
+            <div className="text-sm font-bold text-green-700 dark:text-green-300">{grammarScore}%</div>
+            <svg className="w-3 h-3 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <span className="text-xs text-muted-foreground">Score</span>
+          </div>
+        </div>
+
 
         {/* Right Section: User Profile */}
         <div className="relative" ref={dropdownRef}>
@@ -137,11 +163,11 @@ export function Header({ onMobileMenuToggle, className }: HeaderProps) {
               <div className="px-3 py-2">
                 <div className="flex items-center gap-3">
                   <div className="h-8 w-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-sm font-medium">
-                    {profile?.full_name?.charAt(0)?.toUpperCase() || user.email?.charAt(0)?.toUpperCase() || 'U'}
+                    {profile?.full_name?.charAt(0)?.toUpperCase() || user?.email?.charAt(0)?.toUpperCase() || 'D'}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="text-sm font-medium truncate">{profile?.full_name || 'User'}</div>
-                    <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                    <div className="text-sm font-medium truncate">{profile?.full_name || user?.email || 'Dev User'}</div>
+                    <div className="text-xs text-muted-foreground truncate">{user?.email || 'developer@wordwise.ai'}</div>
                   </div>
                 </div>
                 <div className="mt-2 flex items-center gap-2">
@@ -203,31 +229,6 @@ export function Header({ onMobileMenuToggle, className }: HeaderProps) {
         </div>
       </div>
 
-      {/* Mobile Navigation Menu */}
-      <div className="md:hidden border-t">
-        <nav className="container mx-auto px-4 py-2">
-          <div className="flex flex-col space-y-2">
-            <a
-              href="#"
-              className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground"
-            >
-              Dashboard
-            </a>
-            <a
-              href="#"
-              className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground"
-            >
-              Documents
-            </a>
-            <a
-              href="#"
-              className="flex items-center rounded-md px-3 py-2 text-sm font-medium text-foreground/80 hover:bg-accent hover:text-accent-foreground"
-            >
-              Settings
-            </a>
-          </div>
-        </nav>
-      </div>
     </header>
   );
 } 
