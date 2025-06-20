@@ -33,7 +33,8 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
   } = useEditorStore();
 
   // Extract stable values for dependencies BEFORE using them
-  const userId = user?.id;
+  // Use fallback user ID for development when auth is disabled
+  const userId = user?.id || '00000000-0000-0000-0000-000000000001';
   const activeDocumentTitle = activeDocument?.title;
 
   // Use auto-save hook for consistent status indicators
@@ -81,7 +82,7 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
     try {
       await updateDocument(activeDocumentId, { 
         title: editedTitle.trim() 
-      });
+      }, userId);
       setIsEditingTitle(false);
       console.log('📝 Document title updated:', editedTitle.trim());
       
@@ -204,12 +205,11 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
   return (
     <div className={cn("group flex items-center p-4 border-b border-border bg-background", className)}>
       {/* Left Side - Document Title */}
-      <div className="flex items-center gap-3 flex-1 min-w-0 max-w-md">
-        <FileText className={cn("w-5 h-5 flex-shrink-0", showingNewDocumentInput ? "text-muted-foreground" : "text-primary")} />
+      <div className="flex items-center gap-2 flex-1 min-w-0">
         
         {showingNewDocumentInput ? (
           /* New Document Title Input */
-          <div className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="flex items-center gap-2 flex-1">
             <Input
               value={titleForNewDocument}
               onChange={(e) => setTitleForNewDocument(e.target.value)}
@@ -228,7 +228,7 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
           </div>
         ) : isEditingTitle ? (
           /* Existing Document Title Editing */
-          <div className="flex items-center gap-2 flex-1 max-w-md">
+          <div className="flex items-center gap-2 flex-1">
             <Input
               value={editedTitle}
               onChange={(e) => setEditedTitle(e.target.value)}
