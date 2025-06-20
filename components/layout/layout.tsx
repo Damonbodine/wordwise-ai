@@ -15,6 +15,7 @@ interface LayoutProps {
 export function Layout({ children, className, rightPanel }: LayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
 
   // Suggestions panel now handled in page.tsx
 
@@ -29,6 +30,20 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
   const closeMobileSidebar = () => {
     setIsMobileSidebarOpen(false);
   };
+
+  // Handle search query changes
+  const handleSearchChange = React.useCallback((query: string) => {
+    setSearchQuery(query);
+    // TODO: Implement actual document search functionality
+    console.log('🔍 Search query:', query);
+  }, []);
+
+  // Handle document selection from search
+  const handleDocumentSelect = React.useCallback((documentId: string) => {
+    closeMobileSidebar();
+    // TODO: Navigate to selected document
+    console.log('📄 Document selected:', documentId);
+  }, []);
 
   // Custom save handler for keyboard shortcuts
   const handleSave = React.useCallback(async () => {
@@ -79,7 +94,9 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
       {/* Header - Fixed across all columns */}
       <Header
         onMobileMenuToggle={toggleMobileSidebar}
-        onDocumentSelect={() => closeMobileSidebar()}
+        onDocumentSelect={handleDocumentSelect}
+        searchQuery={searchQuery}
+        onSearchChange={handleSearchChange}
         className="fixed top-0 left-0 right-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
       />
 
