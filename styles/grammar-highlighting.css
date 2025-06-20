@@ -6,6 +6,8 @@
   transition: all 0.2s ease;
   /* Force CSS to override TipTap defaults */
   display: inline !important;
+  /* Ensure clicks are captured */
+  pointer-events: auto !important;
 }
 
 .grammar-issue:hover {

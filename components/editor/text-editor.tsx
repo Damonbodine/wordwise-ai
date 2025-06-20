@@ -12,6 +12,10 @@ import { useDocumentStore } from "@/stores/document-store";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useGrammarStore } from "@/stores/grammar-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { hunspellService } from "@/services/hunspell-service";
+import { GrammarHighlightExtension } from "./grammar-highlight-extension";
+import { GrammarSuggestionPopup } from "./grammar-suggestion-popup";
+import "@/styles/grammar-highlighting.css";
 
 interface TextEditorProps {
   className?: string;
@@ -55,7 +59,22 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
   const {
     analyzeText,
     isAnalyzing,
+    issues,
+    acceptSuggestion,
+    rejectSuggestion,
+    clearAnalysis,
   } = useGrammarStore();
+
+  // State for automatic suggestion popup
+  const [popupState, setPopupState] = React.useState<{
+    issue: any | null;
+    position: { x: number; y: number } | null;
+    isVisible: boolean;
+  }>({
+    issue: null,
+    position: null,
+    isVisible: false,
+  });
 
   // Initialize auto-save hook with 2-second debounce as specified
   const autoSave = useAutoSave({
@@ -71,58 +90,158 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
     },
   });
 
-  // Smart grammar analysis with rate limit prevention
-  const grammarAnalysisTimeoutRef = React.useRef<NodeJS.Timeout | null>(null);
+  // Real-time grammar analysis with 2-second intervals
+  const grammarAnalysisIntervalRef = React.useRef<NodeJS.Timeout | null>(null);
   const lastAnalyzedTextRef = React.useRef<string>('');
-  const lastAnalysisTimeRef = React.useRef<number>(0);
+  const currentTextRef = React.useRef<string>('');
+  const textChangedRef = React.useRef<boolean>(false);
   
-  const triggerGrammarAnalysis = React.useCallback((text: string) => {
-    if (!text.trim()) {
-      return;
-    }
+  const triggerGrammarAnalysis = React.useCallback(async (text: string) => {
+    // Update current text and mark as changed
+    currentTextRef.current = text;
+    textChangedRef.current = true;
     
-    const now = Date.now();
-    const timeSinceLastAnalysis = now - lastAnalysisTimeRef.current;
-    const textLengthDiff = Math.abs(text.length - lastAnalyzedTextRef.current.length);
-    
-    // Smart triggering rules to avoid rate limits
-    const shouldAnalyze = 
-      // Significant content change (10+ characters)
-      textLengthDiff >= 10 ||
-      // Sentence completion (ends with punctuation)
-      /[.!?]\s*$/.test(text.trim()) ||
-      // Long pause in typing (10+ seconds)
-      timeSinceLastAnalysis > 10000 ||
-      // First analysis
-      lastAnalyzedTextRef.current === '';
-    
-    if (!shouldAnalyze) {
-      console.log('[GRAMMAR] Skipping analysis - minor change or recent analysis');
-      return;
-    }
-    
-    // Clear existing timeout
-    if (grammarAnalysisTimeoutRef.current) {
-      clearTimeout(grammarAnalysisTimeoutRef.current);
-    }
-    
-    // Debounce for 2 seconds after smart trigger
-    grammarAnalysisTimeoutRef.current = setTimeout(() => {
-      // Limit text length to save tokens (max 500 chars)
-      const analysisText = text.length > 500 ? text.substring(0, 500) + '...' : text;
+    // Re-enable Hunspell with debouncing to prevent loops
+    if (text.trim() && text.length >= 5) {
+      console.log('[HUNSPELL] Scheduling debounced analysis for text:', text.slice(0, 50));
       
-      console.log('[GRAMMAR] Smart analysis trigger:', {
-        textLength: text.length,
-        analysisLength: analysisText.length,
-        lengthDiff: textLengthDiff,
-        timeSinceLastAnalysis: timeSinceLastAnalysis
-      });
+      // Clear previous timeout
+      clearTimeout((window as any).hunspellDebounceTimeout);
       
-      lastAnalyzedTextRef.current = text;
-      lastAnalysisTimeRef.current = Date.now();
-      analyzeText(analysisText, activeDocumentId);
-    }, 2000);
+      // Only run Hunspell after user stops typing for 1 second
+      (window as any).hunspellDebounceTimeout = setTimeout(async () => {
+        try {
+          console.log('[HUNSPELL] Debounced analysis triggered for text:', text.slice(0, 50));
+          const spellingIssues = await hunspellService.analyzeSpelling(text);
+          console.log('[HUNSPELL] Analysis complete, found:', spellingIssues.length, 'issues');
+          
+          if (spellingIssues.length > 0) {
+            // Add spelling issues to grammar store
+            const { addIssues } = useGrammarStore.getState();
+            addIssues(spellingIssues);
+            console.log(`[HUNSPELL] Added ${spellingIssues.length} spelling issues to store`);
+          } else {
+            console.log('[HUNSPELL] No spelling issues found');
+          }
+        } catch (error) {
+          console.warn('[HUNSPELL] Spell check failed:', error);
+        }
+      }, 1000); // 1 second delay for Hunspell (faster than grammar)
+    } else {
+      console.log('[HUNSPELL] Skipping - text too short:', text.length);
+    }
+    
+    // TEMPORARILY DISABLE ALL INTERVAL-BASED ANALYSIS
+    // Start interval if not already running
+    // if (!grammarAnalysisIntervalRef.current && text.trim()) {
+    //   console.log('[GRAMMAR] Starting real-time analysis interval');
+    //   
+    //   grammarAnalysisIntervalRef.current = setInterval(() => {
+    //     const currentText = currentTextRef.current;
+    //     
+    //     // Only analyze if text has changed and has content
+    //     if (textChangedRef.current && currentText.trim() && currentText !== lastAnalyzedTextRef.current) {
+    //       // Limit text length to save tokens (max 500 chars)
+    //       const analysisText = currentText.length > 500 ? currentText.substring(0, 500) + '...' : currentText;
+    //       
+    //       console.log('[GRAMMAR] Real-time analysis trigger - GROQ DISABLED');
+    //       
+    //       lastAnalyzedTextRef.current = currentText;
+    //       textChangedRef.current = false;
+    //       // TEMPORARILY DISABLE GROQ - CAUSING JSON PARSING ERRORS
+    //       // analyzeText(analysisText, activeDocumentId);
+    //     }
+    //   }, 2000); // Every 2 seconds - matches 30 requests/minute limit
+    // }
   }, [analyzeText, activeDocumentId]);
+  
+  // Clear interval when text becomes empty or component unmounts
+  React.useEffect(() => {
+    return () => {
+      if (grammarAnalysisIntervalRef.current) {
+        clearInterval(grammarAnalysisIntervalRef.current);
+      }
+    };
+  }, []);
+
+  // Handle suggestion popup display
+  const handleSuggestionClick = React.useCallback((issue: any, position: number, clickPosition?: { x: number; y: number }) => {
+    // Use the provided click position if available, otherwise calculate from selection
+    if (clickPosition) {
+      setPopupState({
+        issue,
+        position: clickPosition,
+        isVisible: true,
+      });
+    } else {
+      // Fallback to selection-based positioning
+      const selection = window.getSelection();
+      if (selection && selection.rangeCount > 0) {
+        const range = selection.getRangeAt(0);
+        const rect = range.getBoundingClientRect();
+        
+        setPopupState({
+          issue,
+          position: {
+            x: rect.left + rect.width / 2,
+            y: rect.top - 10,
+          },
+          isVisible: true,
+        });
+      }
+    }
+  }, []);
+
+  // Close popup
+  const handleClosePopup = React.useCallback(() => {
+    setPopupState({ issue: null, position: null, isVisible: false });
+  }, []);
+
+  // Removed auto-show popup - now only shows on click of underlined text
+
+  // Update extension when issues change - CRITICAL FOR HIGHLIGHTING
+  React.useEffect(() => {
+    // Only proceed if editor is fully initialized
+    if (!editor?.view || !editor?.extensionManager) {
+      return;
+    }
+    
+    if (issues && issues.length > 0) {
+      console.log(`[EDITOR] Updating highlighting extension with ${issues.length} issues`);
+      
+      // Update the grammar highlighting extension with new issues
+      const grammarExtension = editor.extensionManager.extensions.find(ext => ext.name === 'grammarHighlight');
+      if (grammarExtension) {
+        grammarExtension.options.issues = issues;
+        grammarExtension.options.onSuggestionClick = handleSuggestionClick;
+        
+        // Force editor to re-render decorations by dispatching a transaction
+        try {
+          const { state, view } = editor;
+          const tr = state.tr;
+          view.dispatch(tr);
+          console.log(`[EDITOR] Updated extension options and triggered re-render`);
+        } catch (error) {
+          console.warn(`[EDITOR] Error updating decorations:`, error);
+        }
+      } else {
+        console.warn(`[EDITOR] Grammar highlight extension not found!`);
+      }
+    } else {
+      console.log(`[EDITOR] Clearing highlighting - no issues`);
+      // Clear highlighting when no issues
+      const grammarExtension = editor.extensionManager?.extensions?.find(ext => ext.name === 'grammarHighlight');
+      if (grammarExtension) {
+        grammarExtension.options.issues = [];
+        try {
+          const { state, view } = editor;
+          view.dispatch(state.tr);
+        } catch (error) {
+          console.warn(`[EDITOR] Error clearing decorations:`, error);
+        }
+      }
+    }
+  }, [issues]); // Remove editor dependency to avoid initialization error
   
   // Debug the store state
   React.useEffect(() => {
@@ -185,6 +304,10 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
       CharacterCount.configure({
         limit: editorSettings.performance.maxDocumentSize,
       }),
+      GrammarHighlightExtension.configure({
+        issues: issues,
+        onSuggestionClick: handleSuggestionClick,
+      }),
     ],
     content: currentEditorContent || activeDocument?.content || "<p>Click here and start typing, then use the toolbar to format your text...</p>",
     editable: editable,
@@ -238,9 +361,22 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
       if (!isInitializing && hasInitializedRef.current) {
         autoSave.triggerAutoSave(html, text);
         
-        // Trigger grammar analysis on text changes (debounced)
-        console.log('🔄 Text changed, triggering grammar analysis for:', text.slice(0, 50) + '...');
-        triggerGrammarAnalysis(text);
+        // Re-enable GROQ grammar analysis with smart debouncing
+        // Only run after user stops typing for 3 seconds to avoid loops
+        if (!isInitializing && text.trim() && text.length >= 10) {
+          clearTimeout((window as any).grammarDebounceTimeout);
+          console.log('[GRAMMAR] Scheduling analysis for text:', text.substring(0, 50) + '...');
+          (window as any).grammarDebounceTimeout = setTimeout(() => {
+            console.log('[GRAMMAR] 🚀 EXECUTING GROQ analysis for text:', text.substring(0, 50) + '...');
+            console.log('[GRAMMAR] Active document ID:', activeDocumentId);
+            // Limit text length to save tokens (max 500 chars)
+            const analysisText = text.length > 500 ? text.substring(0, 500) + '...' : text;
+            analyzeText(analysisText, activeDocumentId);
+            console.log('[GRAMMAR] ✅ analyzeText() called');
+          }, 3000); // 3 second delay after stopping typing
+        } else {
+          console.log('[GRAMMAR] ❌ Skipping analysis - initializing:', isInitializing, 'text length:', text.length);
+        }
       }
     },
     onFocus: () => {
@@ -251,20 +387,22 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
     },
   });
 
+
+  // Track last loaded document ID to prevent reload loops
+  const lastLoadedDocumentIdRef = React.useRef<string | null>(null);
+  
   // Update editor content when active document changes
   React.useEffect(() => {
-    // Get fresh state directly from store to avoid stale closures
-    const storeState = useDocumentStore.getState();
-    const currentActiveDocument = storeState.activeDocumentId 
-      ? storeState.documents.find(doc => doc.id === storeState.activeDocumentId) 
-      : null;
+    // Use current reactive state from the hook, not getState()
+    const currentActiveDocument = activeDocument;
     
     console.log('🔄 Editor useEffect triggered:', {
       hasEditor: !!editor,
-      storeActiveDocumentId: storeState.activeDocumentId,
+      storeActiveDocumentId: activeDocumentId,
       foundDocument: !!currentActiveDocument,
       documentTitle: currentActiveDocument?.title,
       documentContentLength: currentActiveDocument?.content?.length || 0,
+      lastLoadedId: lastLoadedDocumentIdRef.current,
     });
     
     if (!editor) {
@@ -273,6 +411,12 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
     }
     
     if (currentActiveDocument) {
+      // Prevent reload loop - only load if document ID has actually changed
+      if (lastLoadedDocumentIdRef.current === currentActiveDocument.id) {
+        console.log('📋 Skipping document reload - same document ID:', currentActiveDocument.id);
+        return;
+      }
+      
       const documentContent = currentActiveDocument.content || '<p></p>';
       const currentEditorContent = editor.getHTML();
       
@@ -292,6 +436,7 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
         
         editor.commands.setContent(documentContent);
         setEditorContent(documentContent, currentActiveDocument.plainText || '');
+        lastLoadedDocumentIdRef.current = currentActiveDocument.id; // Track loaded document
         console.log(`✅ Successfully loaded document: "${currentActiveDocument.title}"`);
         
         // Mark as initialized after content is set
@@ -300,8 +445,14 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
           hasInitializedRef.current = true;
           
           // Trigger initial grammar analysis for loaded document
-          if (currentActiveDocument.plainText) {
-            triggerGrammarAnalysis(currentActiveDocument.plainText);
+          if (currentActiveDocument.plainText && currentActiveDocument.plainText.length >= 10) {
+            setTimeout(() => {
+              console.log('[GRAMMAR] Triggering initial analysis for loaded document');
+              const analysisText = currentActiveDocument.plainText!.length > 500 
+                ? currentActiveDocument.plainText!.substring(0, 500) + '...' 
+                : currentActiveDocument.plainText!;
+              analyzeText(analysisText, currentActiveDocument.id);
+            }, 1000); // Delay to allow editor to fully initialize
           }
         }, 100);
         
@@ -317,15 +468,15 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
         setIsInitializing(false);
         hasInitializedRef.current = true;
       }
-    } else if (storeState.activeDocumentId) {
-      console.warn('⚠️ Active document ID set but document not found:', storeState.activeDocumentId);
-      console.log('Available documents:', storeState.documents.map(d => ({ id: d.id, title: d.title })));
+    } else if (activeDocumentId) {
+      console.warn('⚠️ Active document ID set but document not found:', activeDocumentId);
+      console.log('Available documents:', documents.map(d => ({ id: d.id, title: d.title })));
     } else {
       console.log('📭 No active document, clearing editor');
       editor.commands.setContent('<p></p>');
       setEditorContent('<p></p>', '');
     }
-  }, [activeDocumentId, editor, documentChangeCounter]);
+  }, [activeDocument, editor, documentChangeCounter]);
 
   // Cleanup auto-save and grammar analysis on unmount
   React.useEffect(() => {
@@ -334,8 +485,8 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
       autoSave.cancelPendingSave();
       
       // Cancel any pending grammar analysis
-      if (grammarAnalysisTimeoutRef.current) {
-        clearTimeout(grammarAnalysisTimeoutRef.current);
+      if (grammarAnalysisIntervalRef.current) {
+        clearInterval(grammarAnalysisIntervalRef.current);
       }
     };
   }, []); // Empty dependency array - only run on unmount
@@ -413,46 +564,138 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
     }
 
     try {
-      const currentContent = editor.getHTML();
+      const currentPlainText = editor.getText();
+      const currentHTML = editor.getHTML();
       
-      // Find and replace the original text with suggested text
-      if (currentContent.includes(replacement.originalText)) {
-        const updatedContent = currentContent.replace(replacement.originalText, replacement.suggestedText);
+      console.log('[TEXT EDITOR] Attempting replacement:', {
+        originalText: replacement.originalText,
+        suggestedText: replacement.suggestedText,
+        currentPlainText: currentPlainText.slice(0, 100) + '...',
+        plainTextIncludes: currentPlainText.includes(replacement.originalText)
+      });
+      
+      // Check if the original text exists in the plain text content
+      if (currentPlainText.includes(replacement.originalText)) {
+        // Simple and reliable approach: use string replacement on content
+        let replaced = false;
         
-        // Update the editor content
-        editor.commands.setContent(updatedContent);
-        
-        // Update the editor store
-        const plainText = editor.getText();
-        setEditorContent(updatedContent, plainText);
-        
-        // Trigger auto-save
-        if (!isInitializing && hasInitializedRef.current) {
-          autoSave.triggerAutoSave(updatedContent, plainText);
+        try {
+          // Method 1: Try HTML content replacement (preserves formatting)
+          const currentHTML = editor.getHTML();
+          const updatedHTML = currentHTML.replace(replacement.originalText, replacement.suggestedText);
+          
+          if (updatedHTML !== currentHTML) {
+            editor.commands.setContent(updatedHTML);
+            replaced = true;
+            console.log('[TEXT EDITOR] Successfully replaced using HTML method');
+          } else {
+            // Method 2: Try plain text replacement with setContent
+            const updatedPlainText = currentPlainText.replace(replacement.originalText, replacement.suggestedText);
+            if (updatedPlainText !== currentPlainText) {
+              editor.commands.setContent(`<p>${updatedPlainText}</p>`);
+              replaced = true;
+              console.log('[TEXT EDITOR] Successfully replaced using plain text method');
+            }
+          }
+        } catch (contentError) {
+          console.warn('[TEXT EDITOR] Content replacement failed:', contentError);
+          replaced = false;
         }
         
-        console.log('[TEXT EDITOR] Applied text replacement:', replacement.originalText, '→', replacement.suggestedText);
-        
-        // Call the callback if provided
-        if (onApplyTextReplacement) {
-          onApplyTextReplacement(replacement);
+        if (replaced) {
+          // Get updated content after replacement
+          const updatedHTML = editor.getHTML();
+          const updatedPlainText = editor.getText();
+          
+          // Update the editor store
+          setEditorContent(updatedHTML, updatedPlainText);
+          
+          // Trigger auto-save
+          if (!isInitializing && hasInitializedRef.current) {
+            autoSave.triggerAutoSave(updatedHTML, updatedPlainText);
+          }
+          
+          console.log('[TEXT EDITOR] Successfully applied text replacement:', replacement.originalText, '→', replacement.suggestedText);
+          
+          // Call the callback if provided
+          if (onApplyTextReplacement) {
+            onApplyTextReplacement(replacement);
+          }
+          
+          // Trigger new grammar analysis after replacement
+          setTimeout(() => {
+            triggerGrammarAnalysis(updatedPlainText);
+          }, 500);
+          
+          return true;
+        } else {
+          console.warn('[TEXT EDITOR] Failed to find and replace text using all methods:', {
+            originalText: replacement.originalText,
+            suggestedText: replacement.suggestedText
+          });
+          return false;
         }
-        
-        return true;
       } else {
-        console.warn('[TEXT EDITOR] Original text not found for replacement:', replacement.originalText);
+        console.warn('[TEXT EDITOR] Original text not found in plain text:', {
+          originalText: replacement.originalText,
+          currentPlainText: currentPlainText.slice(0, 200)
+        });
         return false;
       }
     } catch (error) {
-      console.error('[TEXT EDITOR] Failed to apply text replacement:', error);
+      console.error('[TEXT EDITOR] Failed to apply text replacement:', error, {
+        originalText: replacement.originalText,
+        suggestedText: replacement.suggestedText
+      });
       return false;
     }
-  }, [editor, setEditorContent, autoSave, isInitializing, onApplyTextReplacement]);
+  }, [editor, setEditorContent, autoSave, isInitializing, onApplyTextReplacement, triggerGrammarAnalysis]);
 
   // Expose the applyTextReplacement method via ref
   React.useImperativeHandle(ref, () => ({
     applyTextReplacement
   }), [applyTextReplacement]);
+
+  // Handle accepting a suggestion from popup
+  const handleAcceptSuggestion = React.useCallback((issue: any) => {
+    console.log('[TEXT EDITOR] Accepting suggestion:', issue);
+    
+    const replacement = acceptSuggestion(issue.id);
+    console.log('[TEXT EDITOR] Got replacement:', replacement);
+    
+    if (replacement && editor) {
+      // IMMEDIATELY clear all issues to prevent stale underlines
+      console.log('[TEXT EDITOR] Clearing all issues to prevent stale positions');
+      clearAnalysis();
+      
+      // Apply the replacement to the editor
+      const success = applyTextReplacement(replacement);
+      console.log('[TEXT EDITOR] Text replacement success:', success);
+      
+      if (success) {
+        // Close the popup after successful replacement
+        setPopupState({ issue: null, position: null, isVisible: false });
+        
+        // Immediately trigger fresh analysis to restore remaining issues
+        setTimeout(() => {
+          const updatedText = editor.getText();
+          console.log('[TEXT EDITOR] Triggering immediate re-analysis after accept, text:', updatedText.substring(0, 50) + '...');
+          analyzeText(updatedText, activeDocumentId);
+        }, 500); // Give text replacement time to complete
+      }
+    } else {
+      console.warn('[TEXT EDITOR] Cannot apply replacement - no replacement or editor not ready');
+      // Still close the popup even if replacement failed
+      setPopupState({ issue: null, position: null, isVisible: false });
+    }
+  }, [acceptSuggestion, editor, applyTextReplacement, clearAnalysis, analyzeText, activeDocumentId]);
+
+  // Handle rejecting a suggestion from popup
+  const handleRejectSuggestion = React.useCallback((issue: any) => {
+    console.log('[TEXT EDITOR] Rejecting suggestion:', issue);
+    rejectSuggestion(issue.id);
+    setPopupState({ issue: null, position: null, isVisible: false });
+  }, [rejectSuggestion]);
 
   if (!editor) {
     return (
@@ -761,6 +1004,16 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
           )}
         </div>
       </div>
+
+      {/* Grammar Suggestion Popup */}
+      <GrammarSuggestionPopup
+        issue={popupState.issue}
+        position={popupState.position}
+        onAccept={handleAcceptSuggestion}
+        onReject={handleRejectSuggestion}
+        onClose={handleClosePopup}
+        isVisible={popupState.isVisible}
+      />
     </div>
   );
 });

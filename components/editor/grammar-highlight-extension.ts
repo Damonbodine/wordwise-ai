@@ -32,6 +32,20 @@ export const GrammarHighlightExtension = Extension.create<GrammarHighlightOption
   addProseMirrorPlugins() {
     const extension = this;
     
+    // Set up global click handler for grammar issues
+    (window as any).grammarIssueClick = (issueId: string) => {
+      console.log('[GRAMMAR CLICK] 🖱️ Global click handler called for issue:', issueId);
+      const issue = extension.options.issues.find(i => i.id === issueId);
+      if (issue && extension.options.onSuggestionClick) {
+        console.log('[GRAMMAR CLICK] Found issue, triggering popup:', issue);
+        // Use a simple position for now - popup will auto-position
+        const position = { x: 100, y: 100 };
+        extension.options.onSuggestionClick(issue, 0, position);
+      } else {
+        console.warn('[GRAMMAR CLICK] Issue not found or no click handler:', issueId);
+      }
+    };
+    
     return [
       new Plugin({
         key: grammarHighlightPluginKey,
@@ -99,6 +113,7 @@ export const GrammarHighlightExtension = Extension.create<GrammarHighlightOption
                     'data-issue-type': issue.type,
                     'data-issue-text': issue.originalText,
                     'data-issue-severity': issue.severity,
+                    'onclick': `window.grammarIssueClick('${issue.id}')`,
                   }, {
                     inclusiveStart: false,
                     inclusiveEnd: false,
@@ -132,6 +147,7 @@ export const GrammarHighlightExtension = Extension.create<GrammarHighlightOption
           },
           
           handleClick(view, pos, event) {
+            console.log('[GRAMMAR CLICK] 🖱️ Click detected at position:', pos);
             const target = event.target as HTMLElement;
             
             // Position-based approach: find issues that contain the click position
