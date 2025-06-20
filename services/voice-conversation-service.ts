@@ -97,9 +97,6 @@ export class VoiceConversationService {
 
   async endConversation(): Promise<void> {
     try {
-      // Set stopping flag to prevent auto-restart
-      this.isStopping = true;
-      
       // Stop Web Speech API
       if (this.speechRecognition) {
         this.speechRecognition.stop();
@@ -126,7 +123,6 @@ export class VoiceConversationService {
 
   // Use Web Speech API for transcription (much simpler and reliable)
   private speechRecognition: any = null;
-  private isStopping = false;
   
   sendAudioChunk(chunk: AudioChunk): void {
     // Start Web Speech API recognition if not already running
@@ -177,23 +173,17 @@ export class VoiceConversationService {
       };
 
       this.speechRecognition.onend = () => {
-        console.log('[CONVERSATION SERVICE] Speech recognition ended');
-        
-        // Only restart if we're not intentionally stopping
-        if (!this.isStopping) {
-          console.log('[CONVERSATION SERVICE] Restarting speech recognition...');
-          setTimeout(() => {
-            if (this.speechRecognition && !this.speechRecognition.recognition && !this.isStopping) {
-              try {
-                this.speechRecognition.start();
-              } catch (error) {
-                console.warn('[CONVERSATION SERVICE] Speech recognition already running, skipping restart');
-              }
+        console.log('[CONVERSATION SERVICE] Speech recognition ended, restarting...');
+        // Restart recognition to keep it continuous
+        setTimeout(() => {
+          if (this.speechRecognition && !this.speechRecognition.recognition) {
+            try {
+              this.speechRecognition.start();
+            } catch (error) {
+              console.warn('[CONVERSATION SERVICE] Speech recognition already running, skipping restart');
             }
-          }, 500);
-        } else {
-          console.log('[CONVERSATION SERVICE] Conversation stopped - not restarting speech recognition');
-        }
+          }
+        }, 500);
       };
 
       this.speechRecognition.start();
