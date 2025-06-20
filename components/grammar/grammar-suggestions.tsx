@@ -178,15 +178,6 @@ export const GrammarSuggestions: React.FC<GrammarSuggestionsProps> = ({
               </div>
             ) : (
               <div>
-                <div className="p-4 bg-blue-50 mb-4 rounded">
-                  <p className="text-xs text-blue-800">
-                    Debug: Found {issues.length} total issues, {visibleIssues.length} visible issues
-                  </p>
-                  <p className="text-xs text-blue-600 mt-1">
-                    Issues: {issues.map(i => i.originalText).join(', ') || 'none'}
-                  </p>
-                </div>
-                
                 {visibleIssues.length === 0 ? (
                   <div className="text-center py-8">
                     <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
