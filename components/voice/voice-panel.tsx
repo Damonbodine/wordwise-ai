@@ -17,7 +17,6 @@ interface VoicePanelProps {
 }
 
 export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) {
-  const [isExpanded, setIsExpanded] = useState(false);
   const [interimTranscript, setInterimTranscript] = useState("");
   
   // Voice assistant state
@@ -244,14 +243,6 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
           </div>
         </div>
         
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={() => setIsExpanded(!isExpanded)}
-          className="text-muted-foreground"
-        >
-          {isExpanded ? '▼' : '▲'}
-        </Button>
       </div>
 
       {/* Error Display */}
@@ -380,7 +371,7 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
         )}
 
         {/* Messages Preview */}
-        {isExpanded && messages.length > 0 && (
+        {messages.length > 0 && (
           <div className="flex-1 min-h-0">
             <div className="text-sm text-muted-foreground mb-2">Conversation</div>
             <div className="space-y-2 max-h-40 overflow-y-auto">
@@ -403,25 +394,6 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
           </div>
         )}
 
-        {/* Connection Status Details */}
-        {isExpanded && (
-          <Card className="p-3">
-            <div className="text-sm text-muted-foreground mb-2">Service Status</div>
-            <div className="space-y-1">
-              {Object.entries(connectionStatus).map(([service, status]) => (
-                <div key={service} className="flex items-center justify-between text-xs">
-                  <span className="capitalize">{service}</span>
-                  <Badge 
-                    variant={status === 'connected' ? 'default' : 'secondary'}
-                    className="text-xs"
-                  >
-                    {status}
-                  </Badge>
-                </div>
-              ))}
-            </div>
-          </Card>
-        )}
 
         {/* Help Text */}
         {!currentSession && !error && (
