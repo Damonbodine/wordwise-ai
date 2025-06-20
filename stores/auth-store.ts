@@ -329,13 +329,17 @@ export const useAuthStore = create<AuthStore>()(
 
         // Sign out
         signOut: async () => {
+          console.log('[AUTH STORE] signOut called');
           set({ isLoading: true, error: null });
           
           try {
+            console.log('[AUTH STORE] Calling auth.signOut()...');
             const { error } = await auth.signOut();
+            console.log('[AUTH STORE] auth.signOut() result:', { error });
             
             if (error) throw error;
             
+            console.log('[AUTH STORE] Clearing auth state...');
             // Clear state
             set({
               user: null,
@@ -345,8 +349,10 @@ export const useAuthStore = create<AuthStore>()(
               error: null,
             });
             
+            console.log('[AUTH STORE] signOut successful');
             return { success: true };
           } catch (error: any) {
+            console.error('[AUTH STORE] signOut error:', error);
             const errorMessage = error.message || 'Sign out failed';
             set({ isLoading: false, error: errorMessage });
             return { success: false, error: errorMessage };

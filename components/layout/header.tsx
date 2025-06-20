@@ -398,12 +398,17 @@ export function Header({ onMobileMenuToggle, className, searchQuery = "", onSear
               <div className="h-px bg-border my-1" />
               <button 
                 onClick={async () => {
+                  console.log('[HEADER] Logout button clicked');
                   try {
-                    await signOut();
+                    console.log('[HEADER] Attempting to sign out...');
+                    const result = await signOut();
+                    console.log('[HEADER] Sign out result:', result);
                     setIsProfileMenuOpen(false);
+                    console.log('[HEADER] Redirecting to signin...');
                     router.push('/auth/signin');
                   } catch (error) {
-                    console.error('Sign out failed:', error);
+                    console.error('[HEADER] Sign out failed:', error);
+                    alert('Logout failed: ' + (error as Error).message);
                   }
                 }}
                 className="flex w-full items-center rounded-sm px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-red-600 hover:text-red-600"
