@@ -161,110 +161,149 @@ export const GrammarSuggestions: React.FC<GrammarSuggestionsProps> = ({
           <TabsContent value="all" className="p-4 space-y-3">
             {isAnalyzing ? (
               <div className="text-center py-8">
-                <div className="animate-pulse">
-                  <p className="text-sm text-muted-foreground">Analyzing text...</p>
+                <div className="flex flex-col items-center space-y-4">
+                  {/* Enhanced loading animation with 3 bouncing dots */}
+                  <div className="flex space-x-1">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.3s]"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce [animation-delay:-0.15s]"></div>
+                    <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce"></div>
+                  </div>
+                  <div>
+                    <p className="text-sm font-medium text-blue-700">Analyzing text...</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Checking grammar, clarity & engagement
+                    </p>
+                  </div>
                 </div>
               </div>
-            ) : visibleIssues.length === 0 ? (
-              <div className="text-center py-8">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
-                <p className="text-sm font-medium">Great writing!</p>
-                <p className="text-xs text-muted-foreground">No issues found</p>
-              </div>
             ) : (
-              visibleIssues.map((issue) => (
-                <Card
-                  key={issue.id}
-                  className={cn(
-                    "cursor-pointer transition-all",
-                    selectedIssueId === issue.id && "ring-2 ring-primary"
-                  )}
-                  onClick={() => selectIssue(issue.id)}
-                >
-                  <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
+              <div>
+                <div className="p-4 bg-blue-50 mb-4 rounded">
+                  <p className="text-xs text-blue-800">
+                    Debug: Found {issues.length} total issues, {visibleIssues.length} visible issues
+                  </p>
+                  <p className="text-xs text-blue-600 mt-1">
+                    Issues: {issues.map(i => i.originalText).join(', ') || 'none'}
+                  </p>
+                </div>
+                
+                {visibleIssues.length === 0 ? (
+                  <div className="text-center py-8">
+                    <CheckCircle2 className="h-12 w-12 text-green-500 mx-auto mb-2" />
+                    <p className="text-sm font-medium">Great writing!</p>
+                    <p className="text-xs text-muted-foreground">No issues found</p>
+                  </div>
+                ) : (
+                  <div>
+                    {/* Issue count header when not analyzing */}
+                    <div className="flex items-center justify-between mb-3 p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-2">
-                        <div className={cn(
-                          "p-1 rounded",
-                          getSeverityColor(issue.severity, issue.type)
-                        )}>
-                          {getIssueIcon(issue.type)}
-                        </div>
-                        <div>
-                          <CardTitle className="text-sm font-medium">
-                            {issue.category}
-                          </CardTitle>
-                          <p className="text-xs text-muted-foreground mt-1">
-                            {issue.message}
-                          </p>
-                        </div>
+                        <AlertCircle className="h-4 w-4 text-blue-500" />
+                        <span className="text-sm font-medium">
+                          {visibleIssues.length} suggestion{visibleIssues.length !== 1 ? 's' : ''} found
+                        </span>
                       </div>
-                      <Badge 
-                        variant="outline" 
-                        className={cn(
-                          "text-xs",
-                          getSeverityColor(issue.severity, issue.type)
-                        )}
-                      >
-                        {issue.severity}
+                      <Badge variant="secondary" className="text-xs">
+                        Click to review
                       </Badge>
                     </div>
-                  </CardHeader>
-                  
-                  {selectedIssueId === issue.id && (
-                    <CardContent className="pt-0">
-                      <div className="space-y-3">
-                        <div className="p-2 bg-muted rounded text-sm">
-                          <p className="font-medium mb-1">Original:</p>
-                          <p className="text-red-600 line-through">{issue.originalText}</p>
-                        </div>
-                        
-                        <div className="p-2 bg-muted rounded text-sm">
-                          <p className="font-medium mb-1">Suggested:</p>
-                          <p className="text-green-600">{issue.suggestedText}</p>
-                        </div>
-                        
-                        {issue.explanation && (
-                          <p className="text-xs text-muted-foreground">
-                            {issue.explanation}
-                          </p>
-                        )}
-                        
-                        <div className="flex gap-2">
-                          <Button
-                            size="sm"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAccept(issue.id);
-                            }}
+                    
+                    {visibleIssues.map((issue) => (
+                    <Card
+                      key={issue.id}
+                      className={cn(
+                        "cursor-pointer transition-all",
+                        selectedIssueId === issue.id && "ring-2 ring-primary"
+                      )}
+                      onClick={() => selectIssue(issue.id)}
+                    >
+                      <CardHeader className="pb-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2">
+                            <div className={cn(
+                              "p-1 rounded",
+                              getSeverityColor(issue.severity, issue.type)
+                            )}>
+                              {getIssueIcon(issue.type)}
+                            </div>
+                            <div>
+                              <CardTitle className="text-sm font-medium">
+                                {issue.category}
+                              </CardTitle>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                {issue.message}
+                              </p>
+                            </div>
+                          </div>
+                          <Badge 
+                            variant="outline" 
+                            className={cn(
+                              "text-xs",
+                              getSeverityColor(issue.severity, issue.type)
+                            )}
                           >
-                            Accept
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            className="flex-1"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              rejectSuggestion(issue.id);
-                            }}
-                          >
-                            Dismiss
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={(e) => e.stopPropagation()}
-                          >
-                            <MoreHorizontal className="h-4 w-4" />
-                          </Button>
+                            {issue.severity}
+                          </Badge>
                         </div>
-                      </div>
-                    </CardContent>
-                  )}
-                </Card>
-              ))
+                      </CardHeader>
+                      
+                      {selectedIssueId === issue.id && (
+                        <CardContent className="pt-0">
+                          <div className="space-y-3">
+                            <div className="p-2 bg-muted rounded text-sm">
+                              <p className="font-medium mb-1">Original:</p>
+                              <p className="text-red-600 line-through">{issue.originalText}</p>
+                            </div>
+                            
+                            <div className="p-2 bg-muted rounded text-sm">
+                              <p className="font-medium mb-1">Suggested:</p>
+                              <p className="text-green-600">{issue.suggestedText}</p>
+                            </div>
+                            
+                            {issue.explanation && (
+                              <p className="text-xs text-muted-foreground">
+                                {issue.explanation}
+                              </p>
+                            )}
+                            
+                            <div className="flex gap-2">
+                              <Button
+                                size="sm"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleAccept(issue.id);
+                                }}
+                              >
+                                Accept
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                className="flex-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  rejectSuggestion(issue.id);
+                                }}
+                              >
+                                Dismiss
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={(e) => e.stopPropagation()}
+                              >
+                                <MoreHorizontal className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </CardContent>
+                      )}
+                    </Card>
+                    ))}
+                  </div>
+                )}
+              </div>
             )}
           </TabsContent>
 
