@@ -1,5 +1,19 @@
 # WordWise AI - Claude Development Guide
 
+## Always explain code changes comprehensively
+
+## 🐛 MANDATORY DEBUGGING PROTOCOL
+
+**CRITICAL**: Before attempting any fix, always check `debugginglog.md` to see if the approach has been tried before and failed. Always update the debugging log when attempts fail to avoid repeating unsuccessful paths.
+
+### Required Steps for All Bug Fixes:
+1. **Read debugginglog.md first** - Check if the issue or approach has been attempted
+2. **Make incremental changes** - One small change at a time
+3. **Test immediately** - Verify each change works before proceeding
+4. **Document failures ONLY** - Add failed attempts to debugginglog.md immediately
+5. **Never assume past successes apply** - Each codebase section is unique
+
+
 ## 🔒 Security & Development Protocol
 
 This file contains essential security checks and development guidelines for the WordWise AI project. Claude should **ALWAYS** follow these protocols before any git operations.
@@ -31,11 +45,7 @@ rg -i "\.env" --type-not=md --type-not=gitignore
 rg -i "mongodb://|postgres://|mysql://|redis://|DATABASE_URL" --type-not=md
 ```
 
-### 4. **AWS/Cloud Credentials**
-```bash
-# Check for cloud service credentials
-rg -i "aws_access_key|aws_secret|s3_bucket" --type-not=md
-rg -i "VERCEL_TOKEN|NETLIFY_TOKEN" --type-not=md
+
 ```
 
 ---

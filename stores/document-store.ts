@@ -219,26 +219,23 @@ export const useDocumentStore = create<DocumentStore>()(
       error: null,
       isInitialized: false,
 
-      // Computed getters as properties
-      get activeDocument() {
-        const { documents, activeDocumentId } = get();
-        return activeDocumentId ? documents.find(doc => doc.id === activeDocumentId) || null : null;
-      },
-
-      // These need to be accessed as functions, not properties
-      documentCount: 0,  // Will be updated when documents change
-      totalWordCount: 0, // Will be updated when documents change
+      // Computed properties (updated when documents or activeDocumentId change)
+      activeDocument: null,
+      documentCount: 0,
+      totalWordCount: 0,
       
-      // Helper function to update counts
+      // Helper function to update computed properties
       updateDocumentCounts: () => {
-        const { documents } = get();
+        const { documents, activeDocumentId } = get();
         const nonArchivedDocs = documents.filter(doc => !doc.isArchived);
         const count = nonArchivedDocs.length;
         const wordCount = nonArchivedDocs.reduce((total, doc) => total + (doc.stats?.wordCount || 0), 0);
+        const activeDocument = activeDocumentId ? documents.find(doc => doc.id === activeDocumentId) || null : null;
         
         set({
           documentCount: count,
-          totalWordCount: wordCount
+          totalWordCount: wordCount,
+          activeDocument: activeDocument
         });
       },
 
@@ -287,15 +284,21 @@ export const useDocumentStore = create<DocumentStore>()(
             userId
           );
 
-          // Add to local state
-          set((state) => ({
-            documents: [newDocument, ...state.documents],
-            activeDocumentId: newDocument.id,
-            isLoading: false,
-          }));
-          
-          // Update counts
-          get().updateDocumentCounts();
+          // Add to local state and update counts atomically
+          set((state) => {
+            const newDocuments = [newDocument, ...state.documents];
+            const nonArchivedDocs = newDocuments.filter(doc => !doc.isArchived);
+            const count = nonArchivedDocs.length;
+            const wordCount = nonArchivedDocs.reduce((total, doc) => total + (doc.stats?.wordCount || 0), 0);
+            
+            return {
+              documents: newDocuments,
+              activeDocumentId: newDocument.id,
+              isLoading: false,
+              documentCount: count,
+              totalWordCount: wordCount
+            };
+          });
 
           console.log('[DOC STORE] Document created successfully:', newDocument.id);
           return newDocument;
@@ -327,6 +330,9 @@ export const useDocumentStore = create<DocumentStore>()(
             ),
           }));
 
+          // Update computed properties
+          get().updateDocumentCounts();
+
           console.log('[DOC STORE] Document updated successfully:', id);
         } catch (error) {
           console.error('[DOC STORE] Failed to update document:', error);
@@ -353,6 +359,9 @@ export const useDocumentStore = create<DocumentStore>()(
               (state.documents.find(doc => doc.id !== id)?.id || null) : 
               state.activeDocumentId,
           }));
+
+          // Update computed properties
+          get().updateDocumentCounts();
 
           console.log('[DOC STORE] Document deleted successfully:', id);
         } catch (error) {
@@ -395,6 +404,9 @@ export const useDocumentStore = create<DocumentStore>()(
         }
         
         set({ activeDocumentId: id });
+        
+        // Update computed properties including activeDocument
+        get().updateDocumentCounts();
         
         console.log('✅ Document Store: Active document updated', {
           success: true,

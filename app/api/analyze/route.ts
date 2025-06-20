@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getWritingStyleById, getWritingStylePromptModifications } from '@/lib/writing-styles';
 
 export async function POST(request: NextRequest) {
   try {
-    const { text } = await request.json();
+    const { text, writingStyle } = await request.json();
     console.log('[ANALYZE API] 🔥 Received text:', text.substring(0, 100) + '...');
+    console.log('[ANALYZE API] 📝 Writing style:', writingStyle || 'default');
 
     if (!text || typeof text !== 'string') {
       return NextResponse.json(
@@ -20,6 +22,16 @@ export async function POST(request: NextRequest) {
         { error: 'API configuration error' },
         { status: 500 }
       );
+    }
+
+    // Get style-specific prompt modifications
+    let styleModifications = '';
+    if (writingStyle) {
+      const style = getWritingStyleById(writingStyle);
+      if (style) {
+        styleModifications = getWritingStylePromptModifications(style);
+        console.log('[ANALYZE API] 📝 Adding style modifications for:', style.name);
+      }
     }
 
     const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
@@ -132,7 +144,7 @@ FIELD VALUES:
 - Provide specific, actionable suggestions
 - Explain WHY each change improves the text
 - Respect the author's voice while enhancing clarity and engagement
-- Prioritize reader understanding above all else`
+- Prioritize reader understanding above all else${styleModifications}`
           },
           {
             role: 'user',

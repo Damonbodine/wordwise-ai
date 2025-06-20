@@ -16,6 +16,7 @@ interface LayoutProps {
 export function Layout({ children, className, rightPanel }: LayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false);
+  const [searchQuery, setSearchQuery] = React.useState("");
   
   // Get document store functions for keyboard shortcuts
   const { 
@@ -94,6 +95,13 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
       {/* Header - Fixed across all columns */}
       <Header
         onMobileMenuToggle={toggleMobileSidebar}
+        searchQuery={searchQuery}
+        onSearchChange={setSearchQuery}
+        onDocumentSelect={(docId) => {
+          // Handle document selection from header dropdown
+          console.log('📄 Document selected from header dropdown:', docId);
+          closeMobileSidebar(); // Close mobile sidebar if open
+        }}
         className="fixed top-0 left-0 right-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
       />
 
@@ -111,6 +119,7 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
             onToggle={toggleSidebar}
             isMobileOpen={isMobileSidebarOpen}
             onMobileClose={closeMobileSidebar}
+            searchQuery={searchQuery}
             className=""
           />
         </div>
@@ -171,7 +180,7 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
           <footer className="border-t border-border/40 bg-background/80 backdrop-blur-sm p-4">
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <div className="flex items-center gap-4">
-                <span>© 2024 WordWise AI</span>
+                <span>© 2025 WordWise AI</span>
                 <span className="text-border">•</span>
                 <span>Crafted with precision</span>
               </div>

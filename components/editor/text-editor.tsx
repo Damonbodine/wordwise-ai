@@ -12,6 +12,7 @@ import { useDocumentStore } from "@/stores/document-store";
 import { useAutoSave } from "@/hooks/use-auto-save";
 import { useGrammarStore } from "@/stores/grammar-store";
 import { useAuthStore } from "@/stores/auth-store";
+import { useWritingStyleStore } from "@/stores/writing-style-store";
 import { hunspellService } from "@/services/hunspell-service";
 import { GrammarHighlightExtension } from "./grammar-highlight-extension";
 import { GrammarSuggestionPopup } from "./grammar-suggestion-popup";
@@ -54,6 +55,9 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
 
   // Get user for database operations
   const { user } = useAuthStore();
+  
+  // Get current writing style
+  const { currentStyle } = useWritingStyleStore();
 
   // Initialize grammar analysis store
   const {
@@ -361,19 +365,62 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
       if (!isInitializing && hasInitializedRef.current) {
         autoSave.triggerAutoSave(html, text);
         
-        // Re-enable GROQ grammar analysis with smart debouncing
-        // Only run after user stops typing for 3 seconds to avoid loops
+        // Smart grammar analysis triggers (for regular typing - NOT for accept/dismiss)
         if (!isInitializing && text.trim() && text.length >= 10) {
           clearTimeout((window as any).grammarDebounceTimeout);
-          console.log('[GRAMMAR] Scheduling analysis for text:', text.substring(0, 50) + '...');
-          (window as any).grammarDebounceTimeout = setTimeout(() => {
-            console.log('[GRAMMAR] 🚀 EXECUTING GROQ analysis for text:', text.substring(0, 50) + '...');
-            console.log('[GRAMMAR] Active document ID:', activeDocumentId);
+          
+          // Get tracking variables
+          const previousText = (window as any).lastAnalyzedText || '';
+          const lastAnalysisTime = (window as any).lastAnalysisTime || 0;
+          const timeSinceLastAnalysis = Date.now() - lastAnalysisTime;
+          
+          // Check if this should trigger immediate analysis
+          const shouldAnalyzeImmediately = (() => {
+            // Check for sentence completion (ends with . ! ? followed by optional space)
+            const endsWithSentence = /[.!?]\s*$/.test(text.trim());
+            
+            // Check for significant text change (20+ characters difference)
+            const textDifference = Math.abs(text.length - previousText.length);
+            const significantChange = textDifference >= 20;
+            
+            // Check if it's been a long time since last analysis (30+ seconds)
+            const longTimePassed = timeSinceLastAnalysis > 30000;
+            
+            // Check if this is the first analysis for this document
+            const firstAnalysis = !previousText;
+            
+            return endsWithSentence || significantChange || longTimePassed || firstAnalysis;
+          })();
+          
+          if (shouldAnalyzeImmediately) {
+            console.log('[GRAMMAR] 🚀 IMMEDIATE smart analysis triggered:', {
+              sentenceEnd: /[.!?]\s*$/.test(text.trim()),
+              significantChange: Math.abs(text.length - previousText.length) >= 20,
+              longTime: timeSinceLastAnalysis > 30000,
+              firstTime: !previousText
+            });
+            
             // Limit text length to save tokens (max 500 chars)
             const analysisText = text.length > 500 ? text.substring(0, 500) + '...' : text;
-            analyzeText(analysisText, activeDocumentId);
-            console.log('[GRAMMAR] ✅ analyzeText() called');
-          }, 3000); // 3 second delay after stopping typing
+            analyzeText(analysisText, activeDocumentId, currentStyle.id);
+            
+            // Track analysis time and text
+            (window as any).lastAnalysisTime = Date.now();
+            (window as any).lastAnalyzedText = text;
+          } else {
+            console.log('[GRAMMAR] ⏰ Scheduling DELAYED analysis - no immediate triggers');
+            (window as any).grammarDebounceTimeout = setTimeout(() => {
+              console.log('[GRAMMAR] 🚀 DELAYED analysis triggered');
+              
+              // Limit text length to save tokens (max 500 chars)
+              const analysisText = text.length > 500 ? text.substring(0, 500) + '...' : text;
+              analyzeText(analysisText, activeDocumentId, currentStyle.id);
+              
+              // Track analysis time and text
+              (window as any).lastAnalysisTime = Date.now();
+              (window as any).lastAnalyzedText = text;
+            }, 8000); // 8 second delay for non-urgent analysis
+          }
         } else {
           console.log('[GRAMMAR] ❌ Skipping analysis - initializing:', isInitializing, 'text length:', text.length);
         }
@@ -451,7 +498,7 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
               const analysisText = currentActiveDocument.plainText!.length > 500 
                 ? currentActiveDocument.plainText!.substring(0, 500) + '...' 
                 : currentActiveDocument.plainText!;
-              analyzeText(analysisText, currentActiveDocument.id);
+              analyzeText(analysisText, currentActiveDocument.id, currentStyle.id);
             }, 1000); // Delay to allow editor to fully initialize
           }
         }, 100);
@@ -680,7 +727,7 @@ export const TextEditor = React.forwardRef<TextEditorRef, TextEditorProps>(({
         setTimeout(() => {
           const updatedText = editor.getText();
           console.log('[TEXT EDITOR] Triggering immediate re-analysis after accept, text:', updatedText.substring(0, 50) + '...');
-          analyzeText(updatedText, activeDocumentId);
+          analyzeText(updatedText, activeDocumentId, currentStyle.id);
         }, 500); // Give text replacement time to complete
       }
     } else {

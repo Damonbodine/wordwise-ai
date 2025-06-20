@@ -18,9 +18,10 @@ type SortDirection = "asc" | "desc";
 interface DocumentListProps {
   className?: string;
   onDocumentSelect?: (documentId: string) => void;
+  searchQuery?: string;
 }
 
-export function DocumentList({ className, onDocumentSelect }: DocumentListProps) {
+export function DocumentList({ className, onDocumentSelect, searchQuery = "" }: DocumentListProps) {
   const {
     documents,
     activeDocumentId,
@@ -35,8 +36,7 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
   // Get user for database operations
   const { user } = useAuthStore();
 
-  // Local state for UI controls
-  const [searchQuery, setSearchQuery] = React.useState("");
+  // Local state for UI controls (searchQuery now comes from props)
   const [sortBy, setSortBy] = React.useState<SortOption>("updatedAt");
   const [sortDirection, setSortDirection] = React.useState<SortDirection>("desc");
   const [showFavoritesOnly, setShowFavoritesOnly] = React.useState(false);
@@ -46,7 +46,6 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
   const [editedTitle, setEditedTitle] = React.useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [documentToDelete, setDocumentToDelete] = React.useState<Document | null>(null);
-  const [showTemplateMenu, setShowTemplateMenu] = React.useState(false);
 
   // Filter and sort documents
   const filteredAndSortedDocuments = React.useMemo(() => {
@@ -213,35 +212,6 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
     }
   }, []);
 
-  const handleCreateFromTemplate = React.useCallback(async (templateKey: keyof typeof DOCUMENT_TEMPLATES) => {
-    if (!user?.id) {
-      console.error('❌ Cannot create document from template: User not authenticated');
-      return;
-    }
-
-    try {
-      const templateData = DocumentService.createNewDocument(templateKey);
-      const newDoc = await createDocument(templateData.title, templateData.content, user.id);
-      
-      // Update the newly created document with additional data from template
-      setTimeout(async () => {
-        await updateDocument(newDoc.id, {
-          tags: templateData.tags,
-          stats: templateData.stats,
-          settings: templateData.settings,
-          analysis: templateData.analysis,
-          sharing: templateData.sharing,
-          status: templateData.status,
-        }, user.id);
-      }, 100);
-      
-      console.log('📋 Document created from template:', templateKey, newDoc.title);
-      onDocumentSelect?.(newDoc.id);
-      setShowTemplateMenu(false);
-    } catch (error) {
-      console.error('Failed to create document from template:', error);
-    }
-  }, [createDocument, updateDocument, onDocumentSelect, user?.id]);
 
   // Format date for display (client-side only to prevent hydration errors)
   const [isClient, setIsClient] = React.useState(false);
@@ -250,18 +220,6 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
     setIsClient(true);
   }, []);
 
-  // Close template menu when clicking outside
-  React.useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      const target = event.target as HTMLElement;
-      if (showTemplateMenu && !target.closest('.template-menu-container')) {
-        setShowTemplateMenu(false);
-      }
-    };
-
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [showTemplateMenu]);
 
   const formatDate = React.useCallback((dateString: string) => {
     if (!isClient) {
@@ -293,119 +251,9 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Header with New Document Button */}
-      <div className="flex items-center justify-between p-4 border-b border-border">
-        <h2 className="text-lg font-semibold">Documents</h2>
-        <div className="relative template-menu-container">
-          <Button
-            onClick={() => setShowTemplateMenu(!showTemplateMenu)}
-            size="sm"
-            className="flex items-center gap-2"
-          >
-            <Plus className="w-4 h-4" />
-            New
-          </Button>
-          
-          {/* Template Selection Menu */}
-          {showTemplateMenu && (
-            <div className="absolute right-0 top-full mt-2 w-64 bg-background border rounded-lg shadow-lg z-50 max-h-80 overflow-y-auto">
-              <div className="p-2">
-                <div className="text-xs font-medium text-muted-foreground mb-2 px-2">Content Templates</div>
-                
-                {/* Quick blank document */}
-                <button
-                  onClick={() => handleCreateFromTemplate('blank')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md flex items-center gap-3"
-                >
-                  <FileText className="w-4 h-4 text-muted-foreground" />
-                  <div>
-                    <div className="font-medium">Blank Document</div>
-                    <div className="text-xs text-muted-foreground">Start from scratch</div>
-                  </div>
-                </button>
-                
-                <div className="border-t my-2"></div>
-                
-                {/* Social Media Templates */}
-                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Social Media</div>
-                <button
-                  onClick={() => handleCreateFromTemplate('twitterThread')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
-                >
-                  🧵 Twitter/X Thread
-                </button>
-                <button
-                  onClick={() => handleCreateFromTemplate('linkedinPost')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
-                >
-                  💼 LinkedIn Post
-                </button>
-                <button
-                  onClick={() => handleCreateFromTemplate('instagramCaption')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
-                >
-                  📸 Instagram Caption
-                </button>
-                
-                <div className="border-t my-2"></div>
-                
-                {/* Video Content */}
-                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Video Content</div>
-                <button
-                  onClick={() => handleCreateFromTemplate('youtubeScript')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
-                >
-                  🎬 YouTube Script
-                </button>
-                <button
-                  onClick={() => handleCreateFromTemplate('youtubeDescription')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
-                >
-                  📺 YouTube Description
-                </button>
-                
-                <div className="border-t my-2"></div>
-                
-                {/* Marketing */}
-                <div className="text-xs font-medium text-muted-foreground mb-1 px-2">Marketing</div>
-                <button
-                  onClick={() => handleCreateFromTemplate('emailNewsletter')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
-                >
-                  📧 Email Newsletter
-                </button>
-                <button
-                  onClick={() => handleCreateFromTemplate('seoBlogPost')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
-                >
-                  📝 SEO Blog Post
-                </button>
-                <button
-                  onClick={() => handleCreateFromTemplate('contentBrief')}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-accent rounded-md"
-                >
-                  📋 Content Brief
-                </button>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
 
-      {/* Search and Filters */}
-      <div className="p-4 space-y-3 border-b border-border">
-        {/* Search Input */}
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-          <Input
-            type="text"
-            placeholder="Search documents..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="pl-10"
-          />
-        </div>
-
+      {/* Filters and Sort Controls */}
+      <div className="p-4 border-b border-border bg-gradient-to-b from-background/50 to-background">
         {/* Filter and Sort Controls */}
         <div className="flex items-center justify-between">
           {/* Favorites Filter */}
@@ -413,30 +261,40 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
             variant={showFavoritesOnly ? "secondary" : "ghost"}
             size="sm"
             onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
-            className="flex items-center gap-2"
+            className={cn(
+              "flex items-center gap-2 transition-all duration-200",
+              showFavoritesOnly && "bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950 dark:text-red-300"
+            )}
           >
-            <Heart className={cn("w-4 h-4", showFavoritesOnly && "fill-current")} />
-            Favorites
+            <Heart className={cn("w-4 h-4 transition-all", showFavoritesOnly && "fill-current scale-110")} />
+            <span>Favorites</span>
+            {showFavoritesOnly && (
+              <span className="text-xs bg-red-100 text-red-800 px-1.5 py-0.5 rounded-full dark:bg-red-900 dark:text-red-200">
+                {documents.filter(doc => doc.isFavorite && !doc.isArchived).length}
+              </span>
+            )}
           </Button>
 
           {/* Sort Options */}
-          <div className="flex items-center gap-1">
-            <span className="text-xs text-muted-foreground mr-2">Sort:</span>
+          <div className="flex items-center gap-1 bg-muted/30 rounded-md p-1">
+            <span className="text-xs text-muted-foreground mr-2 px-2">Sort:</span>
             <Button
-              variant="ghost"
+              variant={sortBy === "title" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => handleSortChange("title")}
-              className="flex items-center gap-1 text-xs"
+              className="flex items-center gap-1 text-xs h-7 px-2"
             >
-              Title {getSortIcon("title")}
+              <span>Title</span>
+              {getSortIcon("title")}
             </Button>
             <Button
-              variant="ghost"
+              variant={sortBy === "updatedAt" ? "secondary" : "ghost"}
               size="sm"
               onClick={() => handleSortChange("updatedAt")}
-              className="flex items-center gap-1 text-xs"
+              className="flex items-center gap-1 text-xs h-7 px-2"
             >
-              Modified {getSortIcon("updatedAt")}
+              <span>Modified</span>
+              {getSortIcon("updatedAt")}
             </Button>
           </div>
         </div>
@@ -445,26 +303,53 @@ export function DocumentList({ className, onDocumentSelect }: DocumentListProps)
       {/* Document List */}
       <div className="flex-1 overflow-y-auto">
         {filteredAndSortedDocuments.length === 0 ? (
-          /* Empty State */
+          /* Enhanced Empty State */
           <div className="flex flex-col items-center justify-center h-full p-8 text-center">
-            <FileText className="w-12 h-12 text-muted-foreground mb-4" />
-            <h3 className="text-lg font-medium mb-2">
-              {searchQuery || showFavoritesOnly ? "No documents found" : "No documents yet"}
+            <div className="relative mb-6">
+              <div className="absolute inset-0 bg-gradient-to-r from-primary/20 to-accent/20 rounded-full blur-xl scale-150"></div>
+              <div className="relative bg-gradient-to-br from-primary/10 to-accent/10 p-4 rounded-2xl">
+                {searchQuery ? (
+                  <svg className="w-12 h-12 text-muted-foreground" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+                  </svg>
+                ) : showFavoritesOnly ? (
+                  <Heart className="w-12 h-12 text-muted-foreground" />
+                ) : (
+                  <FileText className="w-12 h-12 text-muted-foreground" />
+                )}
+              </div>
+            </div>
+            <h3 className="text-lg font-semibold mb-2 bg-gradient-to-r from-foreground to-foreground/70 bg-clip-text text-transparent">
+              {searchQuery ? "No matches found" : showFavoritesOnly ? "No favorites yet" : "Ready to start writing?"}
             </h3>
-            <p className="text-muted-foreground mb-4 max-w-sm">
+            <p className="text-muted-foreground mb-6 max-w-sm leading-relaxed">
               {searchQuery
-                ? `No documents match "${searchQuery}". Try a different search term.`
+                ? `No documents match "${searchQuery}". Try adjusting your search or browse all documents.`
                 : showFavoritesOnly
-                ? "You haven't favorited any documents yet. Click the heart icon on any document to add it to favorites."
-                : "Create your first document to get started with your writing journey."
+                ? "Mark documents as favorites by clicking the heart icon. They'll appear here for quick access."
+                : "Create your first document and let AI help you write better, faster, and with more confidence."
               }
             </p>
-            {!searchQuery && !showFavoritesOnly && (
-              <Button onClick={handleCreateDocument} className="flex items-center gap-2">
-                <Plus className="w-4 h-4" />
-                Create First Document
-              </Button>
-            )}
+            <div className="flex flex-col sm:flex-row gap-3">
+              {!searchQuery && !showFavoritesOnly && (
+                <Button onClick={handleCreateDocument} className="flex items-center gap-2 bg-gradient-to-r from-primary to-primary/90 hover:from-primary/90 hover:to-primary shadow-md hover:shadow-lg transition-all">
+                  <Plus className="w-4 h-4" />
+                  Create First Document
+                </Button>
+              )}
+              {showFavoritesOnly && (
+                <Button 
+                  variant="secondary" 
+                  onClick={() => setShowFavoritesOnly(false)}
+                  className="flex items-center gap-2"
+                >
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+                  </svg>
+                  View All Documents
+                </Button>
+              )}
+            </div>
           </div>
         ) : (
           /* Document Items */

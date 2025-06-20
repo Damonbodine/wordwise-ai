@@ -5,6 +5,9 @@
 /* Import ProseMirror base styles */
 @import 'prosemirror-view/style/prosemirror.css';
 
+/* Import Grammar Highlighting styles */
+@import '../styles/grammar-highlighting.css';
+
 @layer base {
   :root {
     --background: 0 0% 100%;

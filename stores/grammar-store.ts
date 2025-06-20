@@ -25,7 +25,8 @@ interface GrammarStore {
   rejectedSuggestions: Set<string>;
   
   // Actions
-  analyzeText: (text: string, documentId?: string) => Promise<void>;
+  analyzeText: (text: string, documentId?: string, writingStyle?: string) => Promise<void>;
+  addIssues: (newIssues: GrammarIssue[]) => void;
   selectIssue: (issueId: string | null) => void;
   acceptSuggestion: (issueId: string) => { originalText: string; suggestedText: string } | null;
   rejectSuggestion: (issueId: string) => void;
@@ -57,18 +58,24 @@ export const useGrammarStore = create<GrammarStore>()(
       rejectedSuggestions: new Set(),
 
       // Analyze text using Groq service
-      analyzeText: async (text: string, documentId?: string) => {
+      analyzeText: async (text: string, documentId?: string, writingStyle?: string) => {
+        console.log('[GRAMMAR STORE] 🔥 analyzeText called with:', { textLength: text.length, textPreview: text.substring(0, 50), documentId, writingStyle });
+        
         const { lastAnalyzedText, acceptedSuggestions, rejectedSuggestions } = get();
         
         // Skip if text hasn't changed
         if (text === lastAnalyzedText) {
+          console.log('[GRAMMAR STORE] ⏭️ Skipping - text unchanged');
           return;
         }
 
+        console.log('[GRAMMAR STORE] 🔄 Setting isAnalyzing = true');
         set({ isAnalyzing: true });
 
         try {
-          const result = await groqGrammarService.analyzeText(text, documentId);
+          console.log('[GRAMMAR STORE] 📡 Calling groqGrammarService.analyzeText...');
+          const result = await groqGrammarService.analyzeText(text, documentId, writingStyle);
+          console.log('[GRAMMAR STORE] 📥 Got result:', result);
           
           // Filter out issues that have been accepted or rejected
           const filteredIssues = result.issues.filter(issue => {
@@ -81,17 +88,87 @@ export const useGrammarStore = create<GrammarStore>()(
             return !wasAccepted && !rejectedSuggestions.has(issue.id);
           });
 
+          // Smart merge: keep existing issues unless superseded by new ones
+          const { issues: existingIssues } = get();
+          
+          // Remove existing issues that overlap with new ones (same position)
+          const nonOverlappingExisting = existingIssues.filter(existing => {
+            return !filteredIssues.some(newIssue => 
+              newIssue.position.start === existing.position.start &&
+              newIssue.position.end === existing.position.end
+            );
+          });
+          
+          // Combine non-overlapping existing issues with new filtered issues
+          const mergedIssues = [...nonOverlappingExisting, ...filteredIssues];
+
+          console.log('[GRAMMAR STORE] 💾 Setting new issues in store:', {
+            originalIssues: result.issues.length,
+            filteredIssues: filteredIssues.length,
+            mergedIssues: mergedIssues.length,
+            scores: result.scores
+          });
+
           set({
-            issues: filteredIssues,
+            issues: mergedIssues,
             scores: result.scores,
             isAnalyzing: false,
             lastAnalyzedText: text
           });
 
-          console.log(`[GRAMMAR] Analysis completed: ${filteredIssues.length} issues found`);
+          console.log(`[GRAMMAR STORE] ✅ Analysis completed: ${filteredIssues.length} issues stored in state`);
         } catch (error) {
           console.error('[GRAMMAR] Analysis failed:', error);
           set({ isAnalyzing: false });
+        }
+      },
+
+      // Add issues immediately (for Hunspell spell checking)
+      addIssues: (newIssues: GrammarIssue[]) => {
+        const { issues, acceptedSuggestions, rejectedSuggestions } = get();
+        
+        // Clear all existing issues first to prevent stacking
+        // (We'll regenerate them all each time)
+        const clearedIssues: GrammarIssue[] = [];
+        
+        // Filter new issues for validity and uniqueness
+        const filteredNewIssues = newIssues.filter(newIssue => {
+          // Don't add if already accepted or rejected by originalText
+          const wasHandled = Array.from(acceptedSuggestions).some(id => {
+            const acceptedIssue = issues.find(i => i.id === id);
+            return acceptedIssue && acceptedIssue.originalText === newIssue.originalText;
+          }) || Array.from(rejectedSuggestions).some(id => {
+            const rejectedIssue = issues.find(i => i.id === id);
+            return rejectedIssue && rejectedIssue.originalText === newIssue.originalText;
+          });
+          
+          if (wasHandled) return false;
+          
+          // Ensure position data exists
+          if (!newIssue.position || typeof newIssue.position.start !== 'number') {
+            console.warn('[GRAMMAR STORE] Skipping issue without valid position:', newIssue);
+            return false;
+          }
+          
+          return true;
+        });
+        
+        // Remove duplicates within the new issues based on text position
+        const uniqueNewIssues = filteredNewIssues.filter((issue, index, array) => {
+          return index === array.findIndex(other => 
+            other.position.start === issue.position.start &&
+            other.position.end === issue.position.end &&
+            other.originalText === issue.originalText
+          );
+        });
+        
+        if (uniqueNewIssues.length > 0) {
+          set({
+            issues: uniqueNewIssues // Replace all issues with new ones
+          });
+          console.log(`[GRAMMAR STORE] Set ${uniqueNewIssues.length} unique issues (cleared previous)`);
+        } else {
+          set({ issues: [] }); // Clear issues if none are valid
         }
       },
 

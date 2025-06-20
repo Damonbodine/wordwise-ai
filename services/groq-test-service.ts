@@ -15,7 +15,7 @@ export class GroqTestService {
   private analysisCache: Map<string, GrammarAnalysisResult> = new Map();
   private pendingAnalysis: Map<string, Promise<GrammarAnalysisResult>> = new Map();
   
-  async analyzeText(text: string, documentId?: string): Promise<GrammarAnalysisResult> {
+  async analyzeText(text: string, documentId?: string, writingStyle?: string): Promise<GrammarAnalysisResult> {
     if (!text || text.trim().length === 0) {
       return this.getEmptyResult();
     }
@@ -33,7 +33,7 @@ export class GroqTestService {
       return this.pendingAnalysis.get(cacheKey)!;
     }
 
-    const promise = this.performAnalysis(text, cacheKey);
+    const promise = this.performAnalysis(text, cacheKey, writingStyle);
     this.pendingAnalysis.set(cacheKey, promise);
     
     try {
@@ -143,7 +143,7 @@ Return ONLY valid JSON:
 - Prioritize reader understanding above all else`;
   }
 
-  private async performAnalysis(text: string, cacheKey: string): Promise<GrammarAnalysisResult> {
+  private async performAnalysis(text: string, cacheKey: string, writingStyle?: string): Promise<GrammarAnalysisResult> {
     const startTime = Date.now();
     console.log('[GROQ TEST] Starting analysis for text:', text.substring(0, 50) + '...');
 
@@ -153,7 +153,7 @@ Return ONLY valid JSON:
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ text }),
+        body: JSON.stringify({ text, writingStyle }),
       });
 
       if (!response.ok) {
@@ -167,7 +167,13 @@ Return ONLY valid JSON:
       }
 
       const data = await response.json();
-      const groqResult = { issues: data.issues, scores: { correctness: 90, clarity: 85, engagement: 80, delivery: 85 } };
+      console.log('[GROQ TEST] Raw API response:', data);
+      
+      // Use the complete response from the API (which now includes both issues and scores)
+      const groqResult = {
+        issues: data.issues || [],
+        scores: data.scores || { correctness: 90, clarity: 85, engagement: 80, delivery: 85 }
+      };
 
       // Convert to our format
       const issues: GrammarIssue[] = groqResult.issues.map((issue: any, index: number) => ({
@@ -179,7 +185,7 @@ Return ONLY valid JSON:
         explanation: issue.explanation,
         position: {
           start: issue.startIndex || 0,
-          end: issue.endIndex || issue.originalText?.length || 0
+          end: issue.endIndex || (issue.startIndex + issue.originalText?.length) || 0
         },
         originalText: issue.originalText,
         suggestedText: issue.suggestedText,
@@ -315,6 +321,8 @@ Return ONLY valid JSON:
     // Check for spelling errors
     words.forEach((word, index) => {
       const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
+      
+      // Check known misspellings
       if (commonMisspellings[cleanWord]) {
         issues.push({
           id: `fallback_spelling_${issueId++}`,
@@ -327,6 +335,38 @@ Return ONLY valid JSON:
           suggestedText: commonMisspellings[cleanWord],
           position: { start: 0, end: word.length },
           confidence: 0.9
+        });
+      }
+      
+      // Check for nonsense/random text patterns (like "afdfdf", "titleafdfdf")
+      else if (cleanWord.length > 3 && /^[a-z]*([a-z])\1{2,}|([a-z]{2,})\2+|[a-z]*[fghj]{3,}|[a-z]*[qwerty]{4,}/.test(cleanWord)) {
+        issues.push({
+          id: `fallback_nonsense_${issueId++}`,
+          type: 'spelling',
+          category: 'Spelling Error', 
+          severity: 'high',
+          message: `"${word}" appears to be nonsense text`,
+          explanation: `"${word}" contains random letters and should be replaced with meaningful text`,
+          originalText: word,
+          suggestedText: '[Replace with meaningful text]',
+          position: { start: 0, end: word.length },
+          confidence: 0.95
+        });
+      }
+      
+      // Check for words with obvious letter repetition patterns
+      else if (cleanWord.length > 5 && /([a-z])\1{2,}/.test(cleanWord)) {
+        issues.push({
+          id: `fallback_repeat_${issueId++}`,
+          type: 'spelling',
+          category: 'Spelling Error',
+          severity: 'medium', 
+          message: `"${word}" has repeated letters`,
+          explanation: `"${word}" contains repeated letters that may be a typo`,
+          originalText: word,
+          suggestedText: '[Check spelling]',
+          position: { start: 0, end: word.length },
+          confidence: 0.8
         });
       }
     });

@@ -12,6 +12,7 @@ interface SidebarProps {
   className?: string;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
+  searchQuery?: string;
 }
 
 // Helper function to format relative time
@@ -33,7 +34,8 @@ export function Sidebar({
   onToggle, 
   className,
   isMobileOpen = false,
-  onMobileClose
+  onMobileClose,
+  searchQuery = ""
 }: SidebarProps) {
   const { 
     documents, 
@@ -131,6 +133,7 @@ export function Sidebar({
                   if (onMobileClose) onMobileClose();
                 }}
                 className="h-full"
+                searchQuery={searchQuery}
               />
             ) : (
               /* Collapsed View - Show Recent Documents */

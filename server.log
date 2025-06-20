@@ -2,16 +2,348 @@
 > wordwise-ai@0.1.0 dev
 > next dev
 
+ ⚠ Port 3000 is in use, using available port 3001 instead.
    ▲ Next.js 15.3.3
-   - Local:        http://localhost:3000
-   - Network:      http://192.168.1.66:3000
+   - Local:        http://localhost:3001
+   - Network:      http://10.127.52.112:3001
    - Environments: .env.local
 
  ✓ Starting...
- ✓ Ready in 1276ms
+ ✓ Ready in 1620ms
  ○ Compiling / ...
- ✓ Compiled / in 3.8s (1211 modules)
-[SUCCESS] Browser-based spell checker initialized
- GET / 200 in 4178ms
- ✓ Compiled in 223ms (556 modules)
+ ✓ Compiled / in 4s (1277 modules)
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ ⨯ ReferenceError: window is not defined
+    at eval (services/hunspell-service.ts:174:1)
+    at (ssr)/./services/hunspell-service.ts (.next/server/app/page.js:497:1)
+    at __webpack_require__ (.next/server/webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(ssr)/./components/editor/text-editor.tsx:20:85)
+    at (ssr)/./components/editor/text-editor.tsx (.next/server/app/page.js:218:1)
+    at __webpack_require__ (.next/server/webpack-runtime.js:33:43)
+    at eval (webpack-internal:///(ssr)/./app/page.tsx:11:88)
+    at (ssr)/./app/page.tsx (.next/server/app/page.js:141:1)
+    at Object.__webpack_require__ [as require] (.next/server/webpack-runtime.js:33:43)
+    at JSON.parse (<anonymous>)
+  172 |
+  173 | // Export test function for debugging
+> 174 | (window as any).testHunspell = async (text: string) => {
+      | ^
+  175 |   console.log('🧪 Testing Hunspell with:', text);
+  176 |   const result = await hunspellService.analyzeSpelling(text);
+  177 |   console.log('🧪 Hunspell result:', result); {
+  digest: '2798677737'
+}
+ GET / 500 in 4951ms
+ ✓ Compiled in 456ms (598 modules)
+ ○ Compiling /auth/signin ...
+ ✓ Compiled /auth/signin in 581ms (1288 modules)
+ GET /auth/signin?redirectTo=%2F 200 in 982ms
+ GET / 200 in 69ms
+ GET /auth/signin?redirectTo=%2F 200 in 46ms
+ GET /auth/signin?redirectTo=%2F 200 in 22ms
+ GET / 200 in 42ms
+ GET /auth/signin?redirectTo=%2F 200 in 17ms
+ GET /auth/signin?redirectTo=%2F 200 in 10ms
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET /auth/signin 200 in 171ms
+ GET / 200 in 23ms
+ GET / 200 in 8ms
+ ○ Compiling /api/analyze ...
+ ✓ Compiled /api/analyze in 707ms (1307 modules)
+GROQ RAW RESPONSE: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":43,"endIndex":50,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"stuffdd","suggestedText":"stuff","startIndex":34,"endIndex":38,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":46,"endIndex":49,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seen","suggestedText":"seen" is correct but "saw" or "watched" could be more precise,"startIndex":51,"endIndex":54,"confidence":0.8},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":58,"endIndex":61,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":63,"endIndex":66,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a","startIndex":76,"endIndex":78,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject, so the verb should be in the singular form","originalText":"I get caught up being a little too curious","suggestedText":"I get caught up in being a little too curious","startIndex":14,"endIndex":31,"confidence":0.8},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject, so the verb should be in the singular form","originalText":"I'm wrong about this stuff","suggestedText":"I am wrong about this stuff","startIndex":32,"endIndex":40,"confidence":0.8},{"type":"grammar","category":"Pronoun case","severity":"medium","message":"Incorrect pronoun case","explanation":"'I' is a singular subject, so the pronoun should be in the singular form","originalText":"you and i","suggestedText":"you and me","startIndex":59,"endIndex":63,"confidence":0.8}]
+Failed to parse Groq response: SyntaxError: Expected ',' or '}' after property value in JSON at position 1757 (line 1 column 1758)
+    at JSON.parse (<anonymous>)
+    at POST (app/api/analyze/route.ts:137:20)
+  135 |     let issues;
+  136 |     try {
+> 137 |       issues = JSON.parse(cleanedContent);
+      |                    ^
+  138 |       if (!Array.isArray(issues)) {
+  139 |         console.log('GROQ RESPONSE NOT ARRAY:', issues);
+  140 |         issues = [];
+Raw content was: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":43,"endIndex":50,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"stuffdd","suggestedText":"stuff","startIndex":34,"endIndex":38,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":46,"endIndex":49,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seen","suggestedText":"seen" is correct but "saw" or "watched" could be more precise,"startIndex":51,"endIndex":54,"confidence":0.8},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":58,"endIndex":61,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":63,"endIndex":66,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a","startIndex":76,"endIndex":78,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject, so the verb should be in the singular form","originalText":"I get caught up being a little too curious","suggestedText":"I get caught up in being a little too curious","startIndex":14,"endIndex":31,"confidence":0.8},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject, so the verb should be in the singular form","originalText":"I'm wrong about this stuff","suggestedText":"I am wrong about this stuff","startIndex":32,"endIndex":40,"confidence":0.8},{"type":"grammar","category":"Pronoun case","severity":"medium","message":"Incorrect pronoun case","explanation":"'I' is a singular subject, so the pronoun should be in the singular form","originalText":"you and i","suggestedText":"you and me","startIndex":59,"endIndex":63,"confidence":0.8}]
+Cleaned content was: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":43,"endIndex":50,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"stuffdd","suggestedText":"stuff","startIndex":34,"endIndex":38,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":46,"endIndex":49,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seen","suggestedText":"seen" is correct but "saw" or "watched" could be more precise,"startIndex":51,"endIndex":54,"confidence":0.8},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":58,"endIndex":61,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":63,"endIndex":66,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a","startIndex":76,"endIndex":78,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject, so the verb should be in the singular form","originalText":"I get caught up being a little too curious","suggestedText":"I get caught up in being a little too curious","startIndex":14,"endIndex":31,"confidence":0.8},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject, so the verb should be in the singular form","originalText":"I'm wrong about this stuff","suggestedText":"I am wrong about this stuff","startIndex":32,"endIndex":40,"confidence":0.8},{"type":"grammar","category":"Pronoun case","severity":"medium","message":"Incorrect pronoun case","explanation":"'I' is a singular subject, so the pronoun should be in the singular form","originalText":"you and i","suggestedText":"you and me","startIndex":59,"endIndex":63,"confidence":0.8}]
+ POST /api/analyze 200 in 2790ms
+GROQ RAW RESPONSE: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":43,"endIndex":50,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"stuffdd","suggestedText":"stuff","startIndex":31,"endIndex":36,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":37,"endIndex":40,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seen","suggestedText":"seen" is correct but "I" should be "me" for correct grammar,"startIndex":53,"endIndex":56,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":63,"endIndex":66,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a.k.f.","startIndex":73,"endIndex":76,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"high","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject and should be paired with a singular verb","originalText":"I'm wrong about this stuffdd","startIndex":29,"endIndex":41,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"high","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject and should be paired with a singular verb","originalText":"I seen the movie yesterday","startIndex":49,"endIndex":56,"confidence":0.9},{"type":"grammar","category":"Incorrect pronoun case","severity":"high","message":"Incorrect pronoun case","explanation":"'you and I' should be 'you and me'","originalText":"you and i","startIndex":61,"endIndex":66,"confidence":0.9},{"type":"grammar","category":"Misplaced apostrophe","severity":"high","message":"Misplaced apostrophe","explanation":"'its' should be 'it's'","originalText":"its raining","startIndex":63,"endIndex":68,"confidence":0.9},{"type":"grammar","category":"Ambiguous pronoun","severity":"high","message":"Ambiguous pronoun","explanation":"'it' is not clearly defined","originalText":"its a frigging [Replace with meaningful text] in her","startIndex":43,"endIndex":59,"confidence":0.9},{"type":"grammar","category":"Ambiguous pronoun","severity":"high","message":"Ambiguous pronoun","explanation":"'it' is not clearly defined","originalText":"its a frigging [Replace with meaningful text] in her","startIndex":43,"endIndex":59,"confidence":0.9},{"type":"grammar","category":"Passive voice","severity":"medium","message":"Passive voice","explanation":"The sentence could be rephrased for better clarity","originalText":"The dog eat his food","startIndex":41,"endIndex":
+Failed to parse Groq response: SyntaxError: Expected ',' or '}' after property value in JSON at position 1757 (line 1 column 1758)
+    at JSON.parse (<anonymous>)
+    at POST (app/api/analyze/route.ts:137:20)
+  135 |     let issues;
+  136 |     try {
+> 137 |       issues = JSON.parse(cleanedContent);
+      |                    ^
+  138 |       if (!Array.isArray(issues)) {
+  139 |         console.log('GROQ RESPONSE NOT ARRAY:', issues);
+  140 |         issues = [];
+Raw content was: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":43,"endIndex":50,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"stuffdd","suggestedText":"stuff","startIndex":31,"endIndex":36,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":37,"endIndex":40,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seen","suggestedText":"seen" is correct but "I" should be "me" for correct grammar,"startIndex":53,"endIndex":56,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":63,"endIndex":66,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a.k.f.","startIndex":73,"endIndex":76,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"high","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject and should be paired with a singular verb","originalText":"I'm wrong about this stuffdd","startIndex":29,"endIndex":41,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"high","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject and should be paired with a singular verb","originalText":"I seen the movie yesterday","startIndex":49,"endIndex":56,"confidence":0.9},{"type":"grammar","category":"Incorrect pronoun case","severity":"high","message":"Incorrect pronoun case","explanation":"'you and I' should be 'you and me'","originalText":"you and i","startIndex":61,"endIndex":66,"confidence":0.9},{"type":"grammar","category":"Misplaced apostrophe","severity":"high","message":"Misplaced apostrophe","explanation":"'its' should be 'it's'","originalText":"its raining","startIndex":63,"endIndex":68,"confidence":0.9},{"type":"grammar","category":"Ambiguous pronoun","severity":"high","message":"Ambiguous pronoun","explanation":"'it' is not clearly defined","originalText":"its a frigging [Replace with meaningful text] in her","startIndex":43,"endIndex":59,"confidence":0.9},{"type":"grammar","category":"Ambiguous pronoun","severity":"high","message":"Ambiguous pronoun","explanation":"'it' is not clearly defined","originalText":"its a frigging [Replace with meaningful text] in her","startIndex":43,"endIndex":59,"confidence":0.9},{"type":"grammar","category":"Passive voice","severity":"medium","message":"Passive voice","explanation":"The sentence could be rephrased for better clarity","originalText":"The dog eat his food","startIndex":41,"endIndex":
+Cleaned content was: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":43,"endIndex":50,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"stuffdd","suggestedText":"stuff","startIndex":31,"endIndex":36,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":37,"endIndex":40,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seen","suggestedText":"seen" is correct but "I" should be "me" for correct grammar,"startIndex":53,"endIndex":56,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":63,"endIndex":66,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a.k.f.","startIndex":73,"endIndex":76,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"high","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject and should be paired with a singular verb","originalText":"I'm wrong about this stuffdd","startIndex":29,"endIndex":41,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"high","message":"Incorrect subject-verb agreement","explanation":"'I' is a singular subject and should be paired with a singular verb","originalText":"I seen the movie yesterday","startIndex":49,"endIndex":56,"confidence":0.9},{"type":"grammar","category":"Incorrect pronoun case","severity":"high","message":"Incorrect pronoun case","explanation":"'you and I' should be 'you and me'","originalText":"you and i","startIndex":61,"endIndex":66,"confidence":0.9},{"type":"grammar","category":"Misplaced apostrophe","severity":"high","message":"Misplaced apostrophe","explanation":"'its' should be 'it's'","originalText":"its raining","startIndex":63,"endIndex":68,"confidence":0.9},{"type":"grammar","category":"Ambiguous pronoun","severity":"high","message":"Ambiguous pronoun","explanation":"'it' is not clearly defined","originalText":"its a frigging [Replace with meaningful text] in her","startIndex":43,"endIndex":59,"confidence":0.9},{"type":"grammar","category":"Ambiguous pronoun","severity":"high","message":"Ambiguous pronoun","explanation":"'it' is not clearly defined","originalText":"its a frigging [Replace with meaningful text]
+ POST /api/analyze 200 in 1805ms
+GROQ RAW RESPONSE: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":57,"endIndex":63,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":43,"endIndex":46,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":58,"endIndex":60,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":67,"endIndex":69,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a","startIndex":81,"endIndex":83,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Subject-verb disagreement","explanation":"Use the correct verb form","originalText":"I'm","suggestedText":"I am","startIndex":0,"endIndex":2,"confidence":0.8},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Subject-verb disagreement","explanation":"Use the correct verb form","originalText":"I'm","suggestedText":"I am","startIndex":22,"endIndex":24,"confidence":0.8},{"type":"grammar","category":"Incorrect pronoun case","severity":"medium","message":"Incorrect pronoun case","explanation":"Use the correct pronoun case","originalText":"you and i","suggestedText":"you and me","startIndex":64,"endIndex":67,"confidence":0.7},{"type":"grammar","category":"Misplaced apostrophe","severity":"medium","message":"Misplaced apostrophe","explanation":"Use the correct apostrophe placement","originalText":"its raining","suggestedText":"it's raining","startIndex":69,"endIndex":72,"confidence":0.9},{"type":"grammar","category":"Misplaced apostrophe","severity":"medium","message":"Misplaced apostrophe","explanation":"Use the correct apostrophe placement","originalText":"its a frigging","suggestedText":"it's a frigging","startIndex":57,"endIndex":64,"confidence":0.9},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"interesting person","suggestedText":"fascinating individual","startIndex":6,"endIndex":18,"confidence":0.6},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"a little too curious","suggestedText":"excessively inquisitive","startIndex":23,"endIndex":36,"confidence":0.6},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"wrong about this stuffdd","suggestedText":"mistaken about this information","startIndex":38,"endIndex":51,"confidence":0.6},{"type":"clarity","category":"Vague language
+Failed to parse Groq response: SyntaxError: Unterminated string in JSON at position 4158 (line 1 column 4159)
+    at JSON.parse (<anonymous>)
+    at POST (app/api/analyze/route.ts:137:20)
+  135 |     let issues;
+  136 |     try {
+> 137 |       issues = JSON.parse(cleanedContent);
+      |                    ^
+  138 |       if (!Array.isArray(issues)) {
+  139 |         console.log('GROQ RESPONSE NOT ARRAY:', issues);
+  140 |         issues = [];
+Raw content was: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":57,"endIndex":63,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":43,"endIndex":46,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":58,"endIndex":60,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":67,"endIndex":69,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a","startIndex":81,"endIndex":83,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Subject-verb disagreement","explanation":"Use the correct verb form","originalText":"I'm","suggestedText":"I am","startIndex":0,"endIndex":2,"confidence":0.8},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Subject-verb disagreement","explanation":"Use the correct verb form","originalText":"I'm","suggestedText":"I am","startIndex":22,"endIndex":24,"confidence":0.8},{"type":"grammar","category":"Incorrect pronoun case","severity":"medium","message":"Incorrect pronoun case","explanation":"Use the correct pronoun case","originalText":"you and i","suggestedText":"you and me","startIndex":64,"endIndex":67,"confidence":0.7},{"type":"grammar","category":"Misplaced apostrophe","severity":"medium","message":"Misplaced apostrophe","explanation":"Use the correct apostrophe placement","originalText":"its raining","suggestedText":"it's raining","startIndex":69,"endIndex":72,"confidence":0.9},{"type":"grammar","category":"Misplaced apostrophe","severity":"medium","message":"Misplaced apostrophe","explanation":"Use the correct apostrophe placement","originalText":"its a frigging","suggestedText":"it's a frigging","startIndex":57,"endIndex":64,"confidence":0.9},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"interesting person","suggestedText":"fascinating individual","startIndex":6,"endIndex":18,"confidence":0.6},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"a little too curious","suggestedText":"excessively inquisitive","startIndex":23,"endIndex":36,"confidence":0.6},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"wrong about this stuffdd","suggestedText":"mistaken about this information","startIndex":38,"endIndex":51,"confidence":0.6},{"type":"clarity","category":"Vague language
+Cleaned content was: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"teh","suggestedText":"the","startIndex":0,"endIndex":3,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"friggin","suggestedText":"frigging","startIndex":57,"endIndex":63,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"recieve","suggestedText":"receive","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"seperate","suggestedText":"separate","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"definately","suggestedText":"definitely","startIndex":0,"confidence":0.9},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"Their","suggestedText":"They're","startIndex":43,"endIndex":46,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":58,"endIndex":60,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"its","suggestedText":"it's","startIndex":67,"endIndex":69,"confidence":0.95},{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling needed","originalText":"akf","suggestedText":"a","startIndex":81,"endIndex":83,"confidence":0.9},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Subject-verb disagreement","explanation":"Use the correct verb form","originalText":"I'm","suggestedText":"I am","startIndex":0,"endIndex":2,"confidence":0.8},{"type":"grammar","category":"Subject-verb disagreement","severity":"medium","message":"Subject-verb disagreement","explanation":"Use the correct verb form","originalText":"I'm","suggestedText":"I am","startIndex":22,"endIndex":24,"confidence":0.8},{"type":"grammar","category":"Incorrect pronoun case","severity":"medium","message":"Incorrect pronoun case","explanation":"Use the correct pronoun case","originalText":"you and i","suggestedText":"you and me","startIndex":64,"endIndex":67,"confidence":0.7},{"type":"grammar","category":"Misplaced apostrophe","severity":"medium","message":"Misplaced apostrophe","explanation":"Use the correct apostrophe placement","originalText":"its raining","suggestedText":"it's raining","startIndex":69,"endIndex":72,"confidence":0.9},{"type":"grammar","category":"Misplaced apostrophe","severity":"medium","message":"Misplaced apostrophe","explanation":"Use the correct apostrophe placement","originalText":"its a frigging","suggestedText":"it's a frigging","startIndex":57,"endIndex":64,"confidence":0.9},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"interesting person","suggestedText":"fascinating individual","startIndex":6,"endIndex":18,"confidence":0.6},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"a little too curious","suggestedText":"excessively inquisitive","startIndex":23,"endIndex":36,"confidence":0.6},{"type":"clarity","category":"Vague language","severity":"low","message":"Vague language","explanation":"Use more descriptive language","originalText":"wrong about this stuffdd","suggestedText":"mistaken about this information","startIndex":38,"endIndex":51,"confidence":0.6},{"type":"clarity","category":"Vague language
+ POST /api/analyze 200 in 2067ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 533ms (1311 modules)
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 950ms
+ ✓ Compiled in 974ms (1289 modules)
+ ✓ Compiled in 1129ms (611 modules)
+ GET / 200 in 377ms
+ ✓ Compiled in 762ms (611 modules)
+ GET / 200 in 204ms
+ ✓ Compiled in 572ms (611 modules)
+ GET / 200 in 76ms
+ ✓ Compiled in 690ms (1289 modules)
+ ✓ Compiled in 1259ms (1305 modules)
+ GET / 200 in 397ms
+ ✓ Compiled in 635ms (1305 modules)
+ GET / 200 in 371ms
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET / 200 in 459ms
+ ✓ Compiled /api/analyze in 458ms (712 modules)
+ GET / 200 in 271ms
+GROQ RAW RESPONSE: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"aHowever","suggestedText":"However","startIndex":7,"endIndex":12,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"occasionally","suggestedText":"occasionally","startIndex":19,"endIndex":28,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"stuffdd","suggestedText":"stuff","startIndex":30,"endIndex":34,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"Their","suggestedText":"They're","startIndex":36,"endIndex":39,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"The dog eat","suggestedText":"The dog eats","startIndex":41,"endIndex":45,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"I seen","suggestedText":"I saw","startIndex":52,"endIndex":54,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"frigging","suggestedText":"frigging","startIndex":63,"endIndex":70,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"its","suggestedText":"it's","startIndex":76,"endIndex":78,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"akf","suggestedText":"a" is not the only issue, but it is a spelling error","startIndex":92,"endIndex":93,"confidence":0.95}]
+Failed to parse Groq response: SyntaxError: Expected ',' or '}' after property value in JSON at position 109 (line 1 column 110)
+    at JSON.parse (<anonymous>)
+    at POST (app/api/analyze/route.ts:144:20)
+  142 |     let issues;
+  143 |     try {
+> 144 |       issues = JSON.parse(cleanedContent);
+      |                    ^
+  145 |       if (!Array.isArray(issues)) {
+  146 |         console.log('GROQ RESPONSE NOT ARRAY:', issues);
+  147 |         issues = [];
+Raw content length: 2091
+Cleaned content length: 2127
+[FALLBACK] Found 9 partial matches, creating basic issues
+ POST /api/analyze 200 in 2323ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/Users/damonbodine/wordwise-ai/.next/cache/webpack/client-development/0.pack.gz_' -> '/Users/damonbodine/wordwise-ai/.next/cache/webpack/client-development/0.pack.gz'
+GROQ RAW RESPONSE: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Separate words","originalText":"occasionally","suggestedText":"occasionally","startIndex":10,"endIndex":17,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"stuffdd","suggestedText":"stuff","startIndex":24,"endIndex":27,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"Their","suggestedText":"They're","startIndex":29,"endIndex":32,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"The dog eat","suggestedText":"The dog eats","startIndex":35,"endIndex":38,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"I seen","suggestedText":"I saw","startIndex":43,"endIndex":45,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"frigging","suggestedText":"frigging","startIndex":51,"endIndex":58,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"its","suggestedText":"it's","startIndex":63,"endIndex":65,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"akf","suggestedText":"and","startIndex":74,"endIndex":76,"confidence":0.95}]
+Failed to parse Groq response: SyntaxError: Expected ',' or '}' after property value in JSON at position 109 (line 1 column 110)
+    at JSON.parse (<anonymous>)
+    at POST (app/api/analyze/route.ts:144:20)
+  142 |     let issues;
+  143 |     try {
+> 144 |       issues = JSON.parse(cleanedContent);
+      |                    ^
+  145 |       if (!Array.isArray(issues)) {
+  146 |         console.log('GROQ RESPONSE NOT ARRAY:', issues);
+  147 |         issues = [];
+Raw content length: 1813
+Cleaned content length: 1845
+[FALLBACK] Found 8 partial matches, creating basic issues
+ POST /api/analyze 200 in 1110ms
+GROQ RAW RESPONSE: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Separate words","originalText":"occasionally","suggestedText":"occasionally","startIndex":14,"endIndex":21,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"Their","suggestedText":"They're","startIndex":23,"endIndex":26,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"The dog eat","suggestedText":"The dog eats","startIndex":30,"endIndex":33,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"I seen","suggestedText":"I saw","startIndex":43,"endIndex":45,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"Dude its","suggestedText":"Dude it's","startIndex":51,"endIndex":54,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"frigging","suggestedText":"frigging","startIndex":59,"endIndex":65,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"Correct spelling","originalText":"akf a","suggestedText":"a","startIndex":73,"endIndex":74,"confidence":0.95}]
+Failed to parse Groq response: SyntaxError: Expected ',' or '}' after property value in JSON at position 109 (line 1 column 110)
+    at JSON.parse (<anonymous>)
+    at POST (app/api/analyze/route.ts:144:20)
+  142 |     let issues;
+  143 |     try {
+> 144 |       issues = JSON.parse(cleanedContent);
+      |                    ^
+  145 |       if (!Array.isArray(issues)) {
+  146 |         console.log('GROQ RESPONSE NOT ARRAY:', issues);
+  147 |         issues = [];
+Raw content length: 1598
+Cleaned content length: 1626
+[FALLBACK] Found 7 partial matches, creating basic issues
+ POST /api/analyze 200 in 1284ms
+GROQ RAW RESPONSE: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"occasionally","suggestedText":"occasionally","startIndex":23,"endIndex":32,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"I'm","suggestedText":"I'm","startIndex":44,"endIndex":46,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"The dog eat","suggestedText":"The dog eats","startIndex":53,"endIndex":56,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"I seen","suggestedText":"I saw","startIndex":64,"endIndex":66,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"frigging","suggestedText":"frigging","startIndex":77,"endIndex":83,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"its","suggestedText":"it's","startIndex":91,"endIndex":93,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"akf","suggestedText":"a","startIndex":104,"endIndex":106,"confidence":0.95}]
+Failed to parse Groq response: SyntaxError: Expected ',' or '}' after property value in JSON at position 109 (line 1 column 110)
+    at JSON.parse (<anonymous>)
+    at POST (app/api/analyze/route.ts:144:20)
+  142 |     let issues;
+  143 |     try {
+> 144 |       issues = JSON.parse(cleanedContent);
+      |                    ^
+  145 |       if (!Array.isArray(issues)) {
+  146 |         console.log('GROQ RESPONSE NOT ARRAY:', issues);
+  147 |         issues = [];
+Raw content length: 1584
+Cleaned content length: 1612
+[FALLBACK] Found 7 partial matches, creating basic issues
+ POST /api/analyze 200 in 1044ms
+GROQ RAW RESPONSE: [{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"occasionally","suggestedText":"occasionally (no change, but it was listed as an error to follow the format exactly)","startIndex":23,"endIndex":31,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"I'm wrong about this stuff","suggestedText":"I'm wrong about this stuff (no change, but it was listed as an error to follow the format exactly)","startIndex":34,"endIndex":46,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"They're going to the store","suggestedText":"They're going to the store (no change, but it was listed as an error to follow the format exactly)","startIndex":47,"endIndex":58,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"I seen the movie yesterday","suggestedText":"I saw the movie yesterday","startIndex":59,"endIndex":68,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"Dude its a frigging","suggestedText":"Dude it's a frigging","startIndex":69,"endIndex":76,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"its raining","suggestedText":"it's raining","startIndex":83,"endIndex":90,"confidence":0.95},
+{"type":"spelling","category":"Spelling Error","severity":"high","message":"Misspelled word","explanation":"correct spelling","originalText":"akf a","suggestedText":"a","startIndex":94,"endIndex":96,"confidence":0.95}]
+Failed to parse Groq response: SyntaxError: Expected ',' or '}' after property value in JSON at position 109 (line 1 column 110)
+    at JSON.parse (<anonymous>)
+    at POST (app/api/analyze/route.ts:144:20)
+  142 |     let issues;
+  143 |     try {
+> 144 |       issues = JSON.parse(cleanedContent);
+      |                    ^
+  145 |       if (!Array.isArray(issues)) {
+  146 |         console.log('GROQ RESPONSE NOT ARRAY:', issues);
+  147 |         issues = [];
+Raw content length: 1954
+Cleaned content length: 1982
+[FALLBACK] Found 7 partial matches, creating basic issues
+ POST /api/analyze 200 in 1379ms
+ ✓ Compiled in 5.4s (1305 modules)
+ GET / 200 in 2002ms
+ ✓ Compiled in 6.2s (1289 modules)
+ ✓ Compiled in 1007ms (1289 modules)
+ ✓ Compiled in 855ms (1289 modules)
+ ✓ Compiled in 522ms (1289 modules)
+ ✓ Compiled in 1050ms (1305 modules)
+ GET / 200 in 378ms
+ ✓ Compiled in 1486ms (1305 modules)
+ GET / 200 in 427ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET / 200 in 2493ms
+ ○ Compiling /icon.svg ...
+ ✓ Compiled /icon.svg in 5.9s (1305 modules)
+ GET /icon.svg?557d997a9e4d61f1 200 in 7049ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET / 200 in 575ms
+ GET / 200 in 1948ms
+ GET / 200 in 79ms
+ ○ Compiling /_not-found ...
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled /_not-found in 691ms (1293 modules)
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1750ms
+ GET / 200 in 1877ms
+ GET /_next/static/webpack/c87c49dcae897af1.webpack.hot-update.json 404 in 67ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET / 200 in 62ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 61ms
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ ✓ Compiled in 1218ms (1309 modules)
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET / 200 in 600ms
+ GET / 200 in 110ms
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 172ms
+ ○ Compiling /icon.svg ...
+ ✓ Compiled /icon.svg in 3s (711 modules)
+ GET /icon.svg?557d997a9e4d61f1 200 in 4274ms
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 876ms
+ ✓ Compiled in 2.9s (1305 modules)
+ GET / 200 in 360ms
+ GET / 200 in 33ms
+ ✓ Compiled in 2.2s (1305 modules)
+ ⨯ SyntaxError: Unexpected non-whitespace character after JSON at position 388 (line 20 column 2)
+    at JSON.parse (<anonymous>) {
+  page: '/'
+}
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 3.1s (1623 modules)
+ GET / 500 in 4426ms
+ GET / 200 in 130ms
+ GET / 200 in 12ms
+ GET / 200 in 16ms
+ GET / 200 in 29ms
+ GET / 200 in 12ms
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET / 200 in 673ms
+ GET / 200 in 99ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 727ms (1584 modules)
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET /.well-known/appspecific/com.chrome.devtools.json 404 in 1564ms
+ ✓ Compiled in 1698ms (1596 modules)
+ GET / 200 in 220ms
+ GET / 200 in 46ms
+ ✓ Compiled in 2.4s (1596 modules)
+ GET / 200 in 187ms
+ GET / 200 in 45ms
+ ✓ Compiled in 850ms (1596 modules)
+ GET / 200 in 246ms
+ GET / 200 in 97ms
+ ✓ Compiled in 674ms (1594 modules)
+ GET / 200 in 716ms
+ GET / 200 in 79ms
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET / 200 in 447ms
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: ENOENT: no such file or directory, rename '/Users/damonbodine/wordwise-ai/.next/cache/webpack/server-development/4.pack.gz_' -> '/Users/damonbodine/wordwise-ai/.next/cache/webpack/server-development/4.pack.gz'
+ ✓ Compiled in 2.3s (1594 modules)
+ GET / 200 in 506ms
+ GET / 200 in 150ms
+ ○ Compiling /_not-found ...
+ ✓ Compiled /_not-found in 3.8s (1582 modules)
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET /_next/static/webpack/d5ec8bc1c3f3b08f.webpack.hot-update.json 404 in 5412ms
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET / 200 in 457ms
+ ✓ Compiled in 3.9s (1598 modules)
+ GET / 200 in 135ms
+ ○ Compiling /icon.svg ...
+ ✓ Compiled /icon.svg in 530ms (755 modules)
+ GET /icon.svg?557d997a9e4d61f1 200 in 1200ms
+ ✓ Compiled in 10.8s (1616 modules)
+ GET / 200 in 2463ms
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ GET / 200 in 902ms
+ ✓ Compiled in 1346ms (1596 modules)
+ ○ Compiling /_not-found ...
+ GET / 200 in 960ms
+ ✓ Compiled /_not-found in 1447ms (1584 modules)
+[SUPABASE] Environment check: { hasUrl: true, hasAnonKey: true, urlLength: 40, keyLength: 208 }
+ ⚠ Fast Refresh had to perform a full reload. Read more: https://nextjs.org/docs/messages/fast-refresh-reload
+ GET / 200 in 1441ms
+ GET /_next/static/webpack/bb0dcc1fa8aaf39f.webpack.hot-update.json 404 in 2379ms
+ GET / 200 in 778ms
+ ○ Compiling /icon.svg ...
+ ✓ Compiled /icon.svg in 931ms (756 modules)
+ GET /icon.svg?557d997a9e4d61f1 200 in 1287ms
+ ✓ Compiled in 2.4s (1616 modules)
+ GET / 200 in 1762ms
+ GET / 200 in 583ms
+ ○ Compiling /_error ...
+ ✓ Compiled /_error in 2.1s (1643 modules)
+ GET /icon.svg?557d997a9e4d61f1 404 in 2918ms
+ ✓ Compiled in 8.8s (1596 modules)
+ ✓ Compiled in 361ms (857 modules)
+ ✓ Compiled in 587ms (857 modules)
+ ✓ Compiled in 929ms (857 modules)
+ ✓ Compiled in 5.4s (1596 modules)
+ ✓ Compiled in 1018ms (1596 modules)
+<w> [webpack.cache.PackFileCacheStrategy] Caching failed for pack: Error: invalid code lengths set
+ ✓ Compiled in 994ms (1596 modules)
 [?25h
