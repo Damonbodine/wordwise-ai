@@ -122,6 +122,7 @@ interface VoiceAssistantStore {
   updateMessage: (id: string, updates: Partial<VoiceMessage>) => void;
   clearMessages: () => void;
   setConversationSummary: (summary: string) => void;
+  setConversationSuggestions: (suggestions: VoiceSuggestion[] | null) => void;
   
   // Actions - Context
   updateDocumentContext: (context: VoiceContext) => void;
