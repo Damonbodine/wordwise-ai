@@ -3,6 +3,7 @@
 import * as React from "react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
+import { VoicePanel } from "@/components/voice/voice-panel";
 
 interface SidebarProps {
   isCollapsed?: boolean;
@@ -40,26 +41,19 @@ export function Sidebar({
         )}
       >
         <div className="flex h-full flex-col">
-          {/* Header with Toggle */}
-          <div className="flex items-center justify-between border-b p-4">
-            {!isCollapsed && (
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center w-6 h-6 rounded-md bg-primary/10 text-primary">
-                  🎤
-                </div>
-                <div className="flex flex-col">
-                  <h2 className="text-lg font-semibold leading-none">Voice Assistant</h2>
-                  <span className="text-xs text-muted-foreground mt-0.5">
-                    Coming Soon
-                  </span>
-                </div>
-              </div>
-            )}
+          {/* Voice Assistant Panel */}
+          <VoicePanel 
+            className="flex-1" 
+            isCollapsed={isCollapsed}
+          />
+          
+          {/* Collapse Toggle */}
+          <div className="border-t p-2">
             <Button
               variant="ghost"
               size="sm"
               onClick={onToggle}
-              className={cn("hidden md:flex", isCollapsed && "mx-auto")}
+              className={cn("w-full", isCollapsed && "px-2")}
             >
               <svg
                 className={cn("h-4 w-4 transition-transform", isCollapsed && "rotate-180")}
@@ -69,28 +63,10 @@ export function Sidebar({
               >
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
+              {!isCollapsed && (
+                <span className="ml-2 text-xs">Collapse</span>
+              )}
             </Button>
-          </div>
-
-          {/* Voice Assistant Placeholder */}
-          <div className="flex-1 flex items-center justify-center p-8">
-            {!isCollapsed ? (
-              <div className="text-center">
-                <div className="w-16 h-16 mx-auto mb-4 rounded-full bg-primary/10 flex items-center justify-center">
-                  🎤
-                </div>
-                <p className="text-sm text-muted-foreground">
-                  Voice assistant will appear here
-                </p>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Real-time AI conversation coming soon
-                </p>
-              </div>
-            ) : (
-              <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-                🎤
-              </div>
-            )}
           </div>
         </div>
       </aside>

@@ -75,5 +75,52 @@ This file tracks failed attempts at fixing issues to avoid repeating the same mi
 
 ---
 
+---
+
+## Voice Assistant Transcription Issues
+
+### Error Details  
+- **Error**: `Invalid query string` from Deepgram API
+- **Location**: `/api/voice/transcribe` endpoint
+- **Root Cause**: Incorrect query parameters in Deepgram API URL based on Deepgram error testing (scripts/deepgram-error-report-detailed.json)
+
+### Failed Attempts
+
+#### Attempt 1: Adding encoding parameter to query string
+- **Date**: 2025-06-20
+- **Change**: Added `&encoding=webm` to Deepgram API URL query parameters  
+- **Files**: `app/api/voice/transcribe/route.ts` line 33
+- **Result**: FAILED - Deepgram returned "Invalid query string" error
+- **Reason**: Deepgram doesn't accept `encoding` as a query parameter; format specified via Content-Type header only
+- **Lesson**: Check Deepgram API documentation for valid query parameters
+
+#### Attempt 2: Removing encoding but keeping malformed parameters
+- **Date**: 2025-06-20
+- **Change**: Removed `&encoding=webm` but kept `model=nova-2&punctuate=true&smart_format=true&language=en`
+- **Files**: `app/api/voice/transcribe/route.ts` line 33  
+- **Result**: FAILED - Still getting "Invalid query string" error
+- **Reason**: According to scripts/deepgram-error-report-detailed.json, boolean parameters may need different formatting
+- **Lesson**: Use Deepgram error handler from scripts/deepgram-error-handler-implementation.ts for parameter validation
+
+#### Attempt 3: Removing language parameter, keeping core parameters
+- **Date**: 2025-06-20
+- **Change**: Removed `&language=en`, kept only `model=nova-2&punctuate=true&smart_format=true`
+- **Files**: `app/api/voice/transcribe/route.ts` line 33
+- **Result**: PARTIAL SUCCESS - Fixed "Invalid query string" but now getting "corrupt or unsupported data" 
+- **Evidence**: One successful transcription logged, then failures
+- **Reason**: Audio chunk combination method creates invalid WebM files
+- **Lesson**: WebM chunks from MediaRecorder cannot be simply concatenated - need proper audio handling
+
+#### Attempt 4: Lowering minimum file size threshold
+- **Date**: 2025-06-20
+- **Change**: Reduced minimum file size from 1000 bytes to 500 bytes to allow smaller chunks
+- **Files**: `app/api/voice/transcribe/route.ts` line 20
+- **Result**: FAILED - Still getting "Deepgram API error: 400" for most chunks
+- **Evidence**: Audio chunks now processed (not skipped) but Deepgram rejects them with 400 errors
+- **Reason**: Individual WebM chunks from MediaRecorder are not valid standalone audio files
+- **Lesson**: Need to accumulate chunks into complete WebM container or use different audio format/approach
+
+---
+
 ## Note
 This log only tracks FAILED attempts to avoid repeating unsuccessful approaches. Do not assume solutions that worked in one area will work in another.
