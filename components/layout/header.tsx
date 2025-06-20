@@ -404,11 +404,19 @@ export function Header({ onMobileMenuToggle, className, searchQuery = "", onSear
                     const result = await signOut();
                     console.log('[HEADER] Sign out result:', result);
                     setIsProfileMenuOpen(false);
-                    console.log('[HEADER] Redirecting to signin...');
-                    router.push('/auth/signin');
+                    
+                    // Always redirect after signout attempt
+                    if (result.success) {
+                      console.log('[HEADER] Redirecting to signin...');
+                      router.push('/auth/signin');
+                    } else {
+                      console.log('[HEADER] Sign out had error but still redirecting');
+                      router.push('/auth/signin');
+                    }
                   } catch (error) {
                     console.error('[HEADER] Sign out failed:', error);
-                    alert('Logout failed: ' + (error as Error).message);
+                    // Still redirect even on error
+                    router.push('/auth/signin');
                   }
                 }}
                 className="flex w-full items-center rounded-sm px-3 py-2 text-sm hover:bg-accent hover:text-accent-foreground text-red-600 hover:text-red-600"

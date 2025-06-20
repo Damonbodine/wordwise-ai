@@ -69,7 +69,15 @@ export const auth = {
 
   // Sign out
   signOut: async () => {
-    return await supabase.auth.signOut();
+    try {
+      // Attempt to sign out with the current session
+      const result = await supabase.auth.signOut();
+      return result;
+    } catch (error) {
+      console.warn('[SUPABASE] Sign out error:', error);
+      // Even if signOut fails, return success so local state can be cleared
+      return { error: null };
+    }
   },
 
   // Reset password

@@ -333,14 +333,21 @@ export const useAuthStore = create<AuthStore>()(
           set({ isLoading: true, error: null });
           
           try {
+            // Check if we have a session before attempting signout
+            const currentSession = get().session;
+            console.log('[AUTH STORE] Current session exists:', !!currentSession);
+            
             console.log('[AUTH STORE] Calling auth.signOut()...');
             const { error } = await auth.signOut();
             console.log('[AUTH STORE] auth.signOut() result:', { error });
             
-            if (error) throw error;
+            // Even if signOut fails due to missing session, we should clear local state
+            if (error && error.message !== 'Auth session missing!') {
+              throw error;
+            }
             
             console.log('[AUTH STORE] Clearing auth state...');
-            // Clear state
+            // Clear state regardless of API response
             set({
               user: null,
               session: null,
@@ -349,10 +356,33 @@ export const useAuthStore = create<AuthStore>()(
               error: null,
             });
             
-            console.log('[AUTH STORE] signOut successful');
+            // Clear persisted storage
+            localStorage.removeItem('supabase.auth.token');
+            sessionStorage.removeItem('supabase.auth.token');
+            
+            console.log('[AUTH STORE] signOut successful (state cleared)');
             return { success: true };
           } catch (error: any) {
             console.error('[AUTH STORE] signOut error:', error);
+            
+            // If it's just a session missing error, still clear local state
+            if (error.message === 'Auth session missing!' || error.message === 'Session not found') {
+              console.log('[AUTH STORE] No active session, clearing local state anyway');
+              set({
+                user: null,
+                session: null,
+                profile: null,
+                isLoading: false,
+                error: null,
+              });
+              
+              // Clear persisted storage
+              localStorage.removeItem('supabase.auth.token');
+              sessionStorage.removeItem('supabase.auth.token');
+              
+              return { success: true };
+            }
+            
             const errorMessage = error.message || 'Sign out failed';
             set({ isLoading: false, error: errorMessage });
             return { success: false, error: errorMessage };
