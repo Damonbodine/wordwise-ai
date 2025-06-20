@@ -1,0 +1,290 @@
+{
+  "timestamp": "2025-06-20T16:24:57.654Z",
+  "summary": {
+    "totalTests": 13,
+    "successfulTests": 4,
+    "errorTests": 9
+  },
+  "errorTypes": {
+    "HTTP_401": {
+      "statusCode": 401,
+      "description": "Unauthorized - Invalid or missing API key",
+      "examples": [
+        {
+          "testName": "Invalid API Key",
+          "description": "Test TTS with invalid API key",
+          "response": {
+            "detail": {
+              "status": "invalid_api_key",
+              "message": "Invalid API key"
+            }
+          },
+          "rawResponseLength": 67
+        },
+        {
+          "testName": "Missing API Key",
+          "description": "Test TTS without API key header",
+          "response": {
+            "detail": {
+              "status": "needs_authorization",
+              "message": "Neither authorization header nor xi-api-key received, please provide one."
+            }
+          },
+          "rawResponseLength": 129
+        },
+        {
+          "testName": "Voices Invalid API Key",
+          "description": "Test voices endpoint with invalid API key",
+          "response": {
+            "detail": {
+              "status": "invalid_api_key",
+              "message": "Invalid API key"
+            }
+          },
+          "rawResponseLength": 67
+        }
+      ]
+    },
+    "HTTP_404": {
+      "statusCode": 404,
+      "description": "Not Found - Resource does not exist",
+      "examples": [
+        {
+          "testName": "Invalid Voice ID",
+          "description": "Test TTS with non-existent voice ID",
+          "response": {
+            "detail": {
+              "status": "voice_not_found",
+              "message": "A voice with the voice_id invalid_voice_id_12345 was not found."
+            }
+          },
+          "rawResponseLength": 115
+        }
+      ]
+    },
+    "HTTP_400": {
+      "statusCode": 400,
+      "description": "Bad Request - Invalid input parameters",
+      "examples": [
+        {
+          "testName": "Invalid Model ID",
+          "description": "Test TTS with non-existent model ID",
+          "response": {
+            "detail": {
+              "status": "model_not_found",
+              "message": "A model with model ID invalid_model_id does not exist ..."
+            }
+          },
+          "rawResponseLength": 109
+        },
+        {
+          "testName": "Invalid Voice Settings",
+          "description": "Test TTS with out-of-range voice settings",
+          "response": {
+            "detail": {
+              "status": "invalid_voice_settings",
+              "message": "Invalid setting for stability received, expected to be greater or equal to 0.0 and less or equal to 1.0, received 2.0."
+            }
+          },
+          "rawResponseLength": 177
+        }
+      ]
+    },
+    "HTTP_422": {
+      "statusCode": 422,
+      "description": "Unprocessable Entity - Request validation failed",
+      "examples": [
+        {
+          "testName": "Malformed JSON",
+          "description": "Test TTS with invalid JSON payload",
+          "response": {
+            "detail": [
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "text"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "model_id"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "language_code"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "voice_settings"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "pronunciation_dictionary_locators"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "seed"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "previous_text"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "next_text"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "previous_request_ids"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "next_request_ids"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "use_pvc_as_ivc"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "apply_text_normalization"
+                ],
+                "msg": "Field required",
+                "input": null
+              },
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "apply_language_text_normalization"
+                ],
+                "msg": "Field required",
+                "input": null
+              }
+            ]
+          },
+          "rawResponseLength": 1166
+        },
+        {
+          "testName": "Missing Required Fields",
+          "description": "Test TTS without required text field",
+          "response": {
+            "detail": [
+              {
+                "type": "missing",
+                "loc": [
+                  "body",
+                  "text"
+                ],
+                "msg": "Field required",
+                "input": null
+              }
+            ]
+          },
+          "rawResponseLength": 89
+        }
+      ]
+    },
+    "HTTP_405": {
+      "statusCode": 405,
+      "description": "HTTP 405 Error",
+      "examples": [
+        {
+          "testName": "Wrong HTTP Method",
+          "description": "Test TTS endpoint with GET instead of POST",
+          "response": {
+            "detail": "Method Not Allowed"
+          },
+          "rawResponseLength": 31
+        }
+      ]
+    }
+  },
+  "successfulCases": [
+    {
+      "testName": "Empty Text Input",
+      "statusCode": 200,
+      "description": "Test TTS with empty string",
+      "note": "Successfully generated audio"
+    },
+    {
+      "testName": "Long Text Input",
+      "statusCode": 200,
+      "description": "Test TTS with text longer than 1000 characters",
+      "note": "Successfully generated audio"
+    },
+    {
+      "testName": "Special Characters",
+      "statusCode": 200,
+      "description": "Test TTS with special characters and emojis",
+      "note": "Successfully generated audio"
+    },
+    {
+      "testName": "Voices Missing API Key",
+      "statusCode": 200,
+      "description": "Test voices endpoint without API key",
+      "note": "Successfully generated audio"
+    }
+  ],
+  "recommendations": [
+    "Always validate API key before making requests",
+    "Implement input validation for text length, voice IDs, and request format",
+    "Validate voice settings ranges (stability: 0-1, similarity_boost: 0-1)",
+    "Some edge cases (empty text, special characters) may still work - test in production context"
+  ]
+}

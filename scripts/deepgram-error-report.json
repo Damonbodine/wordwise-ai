@@ -1,0 +1,409 @@
+{
+  "summary": {
+    "totalTests": 10,
+    "timestamp": "2025-06-20T16:56:18.535Z",
+    "apiKeyUsed": "f1e3407038..."
+  },
+  "errorTypes": {
+    "DeepgramVersionError": [
+      {
+        "testName": "Invalid API Key",
+        "success": false,
+        "errorType": "DeepgramVersionError",
+        "statusCode": 401,
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "error": {
+            "__dgError": true,
+            "name": "DeepgramVersionError"
+          }
+        },
+        "recommendation": "Validate API key before initializing client. Show clear error message to user about invalid credentials."
+      }
+    ],
+    "Invalid Audio Format": [
+      {
+        "testName": "Invalid Audio Format",
+        "success": false,
+        "errorType": "Invalid Audio Format",
+        "statusCode": 400,
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "error": {
+            "__dgError": true,
+            "name": "DeepgramVersionError"
+          },
+          "supportedFormats": [
+            "wav",
+            "mp3",
+            "mp4",
+            "flac",
+            "ogg",
+            "webm"
+          ]
+        },
+        "recommendation": "Validate audio format before sending. Support format conversion or provide clear error messages about supported formats."
+      }
+    ],
+    "Network Timeout": [
+      {
+        "testName": "Network Timeout",
+        "success": false,
+        "errorType": "Network Timeout",
+        "statusCode": "TIMEOUT",
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "error": {
+            "__dgError": true,
+            "name": "DeepgramVersionError"
+          },
+          "timeout": true
+        },
+        "recommendation": "Implement retry logic with exponential backoff. Show user-friendly message about network issues. Consider implementing a queue system for failed requests."
+      }
+    ],
+    "WebSocket Connection Error": [
+      {
+        "testName": "WebSocket Connection Failure",
+        "success": false,
+        "errorType": "WebSocket Connection Error",
+        "statusCode": "WS_CONN_ERROR",
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        },
+        "recommendation": "Handle WebSocket connection errors gracefully. Implement automatic reconnection with backoff. Show connection status in UI."
+      }
+    ],
+    "Rate Limit Error": [
+      {
+        "testName": "Rate Limit Testing",
+        "success": false,
+        "errorType": "Rate Limit Error",
+        "statusCode": 429,
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "error": {
+            "__dgError": true,
+            "name": "DeepgramVersionError"
+          }
+        },
+        "recommendation": "Implement request queuing and throttling. Honor Retry-After headers. Show user-friendly message about temporary limit."
+      }
+    ],
+    "Invalid Parameters": [
+      {
+        "testName": "Malformed Request",
+        "success": false,
+        "errorType": "Invalid Parameters",
+        "statusCode": 400,
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "error": {
+            "__dgError": true,
+            "name": "DeepgramVersionError"
+          },
+          "validModels": [
+            "nova-2",
+            "nova",
+            "whisper",
+            "general"
+          ],
+          "validLanguages": [
+            "en",
+            "es",
+            "fr",
+            "de",
+            "it",
+            "pt",
+            "nl",
+            "hi",
+            "ja",
+            "zh",
+            "ko",
+            "sv",
+            "ru"
+          ]
+        },
+        "recommendation": "Validate all parameters before sending request. Provide dropdown/selection for valid options in UI."
+      }
+    ],
+    "File Too Large": [
+      {
+        "testName": "Large Audio File",
+        "success": false,
+        "errorType": "File Too Large",
+        "statusCode": 413,
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "error": {
+            "__dgError": true,
+            "name": "DeepgramVersionError"
+          },
+          "maxSizeMB": 2048,
+          "recommendation": "For large files, use streaming or chunking"
+        },
+        "recommendation": "Check file size before upload. For large files, use streaming API or split into chunks. Show progress indicator for large uploads."
+      }
+    ],
+    "Invalid URL": [
+      {
+        "testName": "Invalid URL",
+        "success": false,
+        "errorType": "Invalid URL",
+        "statusCode": 400,
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "error": {
+            "__dgError": true,
+            "name": "DeepgramVersionError"
+          },
+          "url": "https://invalid-domain-that-does-not-exist-12345.com/audio.wav"
+        },
+        "recommendation": "Validate URL accessibility before sending to Deepgram. Implement URL validation and pre-flight checks."
+      }
+    ],
+    "Streaming Setup Error": [
+      {
+        "testName": "Streaming Interruption",
+        "success": false,
+        "errorType": "Streaming Setup Error",
+        "statusCode": "STREAM_INIT_ERROR",
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        },
+        "recommendation": "Handle streaming setup failures. Provide fallback options."
+      }
+    ],
+    "Unsupported Language": [
+      {
+        "testName": "Unsupported Language",
+        "success": false,
+        "errorType": "Unsupported Language",
+        "statusCode": 400,
+        "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+        "errorDetails": {
+          "error": {
+            "__dgError": true,
+            "name": "DeepgramVersionError"
+          },
+          "requestedLanguage": "klingon",
+          "supportedLanguages": [
+            "en",
+            "es",
+            "fr",
+            "de",
+            "it",
+            "pt",
+            "nl",
+            "hi",
+            "ja",
+            "zh",
+            "ko",
+            "sv",
+            "ru",
+            "tr",
+            "pl",
+            "uk",
+            "ca"
+          ]
+        },
+        "recommendation": "Provide language selection dropdown with only supported languages. Default to auto-detect or English if unsupported language requested."
+      }
+    ]
+  },
+  "fullResults": [
+    {
+      "testName": "Invalid API Key",
+      "success": false,
+      "errorType": "DeepgramVersionError",
+      "statusCode": 401,
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "error": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        }
+      },
+      "recommendation": "Validate API key before initializing client. Show clear error message to user about invalid credentials."
+    },
+    {
+      "testName": "Invalid Audio Format",
+      "success": false,
+      "errorType": "Invalid Audio Format",
+      "statusCode": 400,
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "error": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        },
+        "supportedFormats": [
+          "wav",
+          "mp3",
+          "mp4",
+          "flac",
+          "ogg",
+          "webm"
+        ]
+      },
+      "recommendation": "Validate audio format before sending. Support format conversion or provide clear error messages about supported formats."
+    },
+    {
+      "testName": "Network Timeout",
+      "success": false,
+      "errorType": "Network Timeout",
+      "statusCode": "TIMEOUT",
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "error": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        },
+        "timeout": true
+      },
+      "recommendation": "Implement retry logic with exponential backoff. Show user-friendly message about network issues. Consider implementing a queue system for failed requests."
+    },
+    {
+      "testName": "WebSocket Connection Failure",
+      "success": false,
+      "errorType": "WebSocket Connection Error",
+      "statusCode": "WS_CONN_ERROR",
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "__dgError": true,
+        "name": "DeepgramVersionError"
+      },
+      "recommendation": "Handle WebSocket connection errors gracefully. Implement automatic reconnection with backoff. Show connection status in UI."
+    },
+    {
+      "testName": "Rate Limit Testing",
+      "success": false,
+      "errorType": "Rate Limit Error",
+      "statusCode": 429,
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "error": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        }
+      },
+      "recommendation": "Implement request queuing and throttling. Honor Retry-After headers. Show user-friendly message about temporary limit."
+    },
+    {
+      "testName": "Malformed Request",
+      "success": false,
+      "errorType": "Invalid Parameters",
+      "statusCode": 400,
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "error": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        },
+        "validModels": [
+          "nova-2",
+          "nova",
+          "whisper",
+          "general"
+        ],
+        "validLanguages": [
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "pt",
+          "nl",
+          "hi",
+          "ja",
+          "zh",
+          "ko",
+          "sv",
+          "ru"
+        ]
+      },
+      "recommendation": "Validate all parameters before sending request. Provide dropdown/selection for valid options in UI."
+    },
+    {
+      "testName": "Large Audio File",
+      "success": false,
+      "errorType": "File Too Large",
+      "statusCode": 413,
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "error": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        },
+        "maxSizeMB": 2048,
+        "recommendation": "For large files, use streaming or chunking"
+      },
+      "recommendation": "Check file size before upload. For large files, use streaming API or split into chunks. Show progress indicator for large uploads."
+    },
+    {
+      "testName": "Invalid URL",
+      "success": false,
+      "errorType": "Invalid URL",
+      "statusCode": 400,
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "error": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        },
+        "url": "https://invalid-domain-that-does-not-exist-12345.com/audio.wav"
+      },
+      "recommendation": "Validate URL accessibility before sending to Deepgram. Implement URL validation and pre-flight checks."
+    },
+    {
+      "testName": "Streaming Interruption",
+      "success": false,
+      "errorType": "Streaming Setup Error",
+      "statusCode": "STREAM_INIT_ERROR",
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "__dgError": true,
+        "name": "DeepgramVersionError"
+      },
+      "recommendation": "Handle streaming setup failures. Provide fallback options."
+    },
+    {
+      "testName": "Unsupported Language",
+      "success": false,
+      "errorType": "Unsupported Language",
+      "statusCode": 400,
+      "errorMessage": "You are attempting to use an old format for a newer SDK version. Read more here: https://dpgr.am/js-v3",
+      "errorDetails": {
+        "error": {
+          "__dgError": true,
+          "name": "DeepgramVersionError"
+        },
+        "requestedLanguage": "klingon",
+        "supportedLanguages": [
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "pt",
+          "nl",
+          "hi",
+          "ja",
+          "zh",
+          "ko",
+          "sv",
+          "ru",
+          "tr",
+          "pl",
+          "uk",
+          "ca"
+        ]
+      },
+      "recommendation": "Provide language selection dropdown with only supported languages. Default to auto-detect or English if unsupported language requested."
+    }
+  ]
+}

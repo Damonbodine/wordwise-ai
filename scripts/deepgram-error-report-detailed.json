@@ -1,0 +1,211 @@
+{
+  "summary": {
+    "totalTests": 5,
+    "timestamp": "2025-06-20T17:00:37.389Z",
+    "apiKeyUsed": "f1e3407038...",
+    "testEnvironment": "Node.js Direct HTTP Requests"
+  },
+  "errorTypes": {
+    "Authentication Error": [
+      {
+        "testName": "Invalid API Key",
+        "success": false,
+        "errorType": "Authentication Error",
+        "statusCode": 401,
+        "errorMessage": "Invalid credentials.",
+        "errorDetails": {
+          "err_code": "INVALID_AUTH",
+          "err_msg": "Invalid credentials.",
+          "request_id": "1a19fdbd-5b51-435d-8c4e-2e338a9004cb"
+        },
+        "recommendation": "Validate API key before initializing client. Show clear error message to user about invalid credentials."
+      }
+    ],
+    "Invalid URL": [
+      {
+        "testName": "Invalid Audio URL",
+        "success": false,
+        "errorType": "Invalid URL",
+        "statusCode": 400,
+        "errorMessage": "Could not determine if URL for media download is publicly routable.",
+        "errorDetails": {
+          "err_code": "REMOTE_CONTENT_ERROR",
+          "err_msg": "Could not determine if URL for media download is publicly routable.",
+          "request_id": "0899004f-1fb0-47f0-9cdd-d8eff4022a3a"
+        },
+        "recommendation": "Validate URL accessibility before sending to Deepgram. Implement URL pre-flight checks."
+      }
+    ],
+    "Invalid Parameters": [
+      {
+        "testName": "Invalid Model Parameter",
+        "success": false,
+        "errorType": "Invalid Parameters",
+        "statusCode": 403,
+        "errorMessage": "Project does not have access to the requested model.",
+        "errorDetails": {
+          "err_code": "INSUFFICIENT_PERMISSIONS",
+          "err_msg": "Project does not have access to the requested model.",
+          "request_id": "c3c7a584-d8c1-467a-b3e9-0ba453a767d5",
+          "validModels": [
+            "nova-2",
+            "nova",
+            "whisper",
+            "general",
+            "meeting",
+            "phonecall"
+          ]
+        },
+        "recommendation": "Validate all parameters before sending request. Provide dropdown/selection for valid options in UI."
+      }
+    ],
+    "Invalid Language": [
+      {
+        "testName": "Invalid Language Parameter",
+        "success": false,
+        "errorType": "Invalid Language",
+        "statusCode": 400,
+        "errorMessage": "Bad Request: No such model/language/tier combination found.",
+        "errorDetails": {
+          "err_code": "Bad Request",
+          "err_msg": "Bad Request: No such model/language/tier combination found.",
+          "request_id": "7607cb38-5def-4b76-89a3-60e63eaa9fa2",
+          "requestedLanguage": "klingon",
+          "supportedLanguages": [
+            "en",
+            "es",
+            "fr",
+            "de",
+            "it",
+            "pt",
+            "nl",
+            "hi",
+            "ja",
+            "zh",
+            "ko",
+            "sv",
+            "ru",
+            "tr",
+            "pl",
+            "uk",
+            "ca"
+          ]
+        },
+        "recommendation": "Provide language selection dropdown with only supported languages. Default to auto-detect or English if unsupported language requested."
+      }
+    ],
+    "WebSocket Timeout": [
+      {
+        "testName": "WebSocket Connection Test",
+        "success": false,
+        "errorType": "WebSocket Timeout",
+        "statusCode": "TIMEOUT",
+        "errorMessage": "WebSocket connection timed out",
+        "errorDetails": {
+          "timeout": 5000
+        },
+        "recommendation": "Implement connection timeouts and retry logic for WebSocket connections."
+      }
+    ]
+  },
+  "fullResults": [
+    {
+      "testName": "Invalid API Key",
+      "success": false,
+      "errorType": "Authentication Error",
+      "statusCode": 401,
+      "errorMessage": "Invalid credentials.",
+      "errorDetails": {
+        "err_code": "INVALID_AUTH",
+        "err_msg": "Invalid credentials.",
+        "request_id": "1a19fdbd-5b51-435d-8c4e-2e338a9004cb"
+      },
+      "recommendation": "Validate API key before initializing client. Show clear error message to user about invalid credentials."
+    },
+    {
+      "testName": "Invalid Audio URL",
+      "success": false,
+      "errorType": "Invalid URL",
+      "statusCode": 400,
+      "errorMessage": "Could not determine if URL for media download is publicly routable.",
+      "errorDetails": {
+        "err_code": "REMOTE_CONTENT_ERROR",
+        "err_msg": "Could not determine if URL for media download is publicly routable.",
+        "request_id": "0899004f-1fb0-47f0-9cdd-d8eff4022a3a"
+      },
+      "recommendation": "Validate URL accessibility before sending to Deepgram. Implement URL pre-flight checks."
+    },
+    {
+      "testName": "Invalid Model Parameter",
+      "success": false,
+      "errorType": "Invalid Parameters",
+      "statusCode": 403,
+      "errorMessage": "Project does not have access to the requested model.",
+      "errorDetails": {
+        "err_code": "INSUFFICIENT_PERMISSIONS",
+        "err_msg": "Project does not have access to the requested model.",
+        "request_id": "c3c7a584-d8c1-467a-b3e9-0ba453a767d5",
+        "validModels": [
+          "nova-2",
+          "nova",
+          "whisper",
+          "general",
+          "meeting",
+          "phonecall"
+        ]
+      },
+      "recommendation": "Validate all parameters before sending request. Provide dropdown/selection for valid options in UI."
+    },
+    {
+      "testName": "Invalid Language Parameter",
+      "success": false,
+      "errorType": "Invalid Language",
+      "statusCode": 400,
+      "errorMessage": "Bad Request: No such model/language/tier combination found.",
+      "errorDetails": {
+        "err_code": "Bad Request",
+        "err_msg": "Bad Request: No such model/language/tier combination found.",
+        "request_id": "7607cb38-5def-4b76-89a3-60e63eaa9fa2",
+        "requestedLanguage": "klingon",
+        "supportedLanguages": [
+          "en",
+          "es",
+          "fr",
+          "de",
+          "it",
+          "pt",
+          "nl",
+          "hi",
+          "ja",
+          "zh",
+          "ko",
+          "sv",
+          "ru",
+          "tr",
+          "pl",
+          "uk",
+          "ca"
+        ]
+      },
+      "recommendation": "Provide language selection dropdown with only supported languages. Default to auto-detect or English if unsupported language requested."
+    },
+    {
+      "testName": "WebSocket Connection Test",
+      "success": false,
+      "errorType": "WebSocket Timeout",
+      "statusCode": "TIMEOUT",
+      "errorMessage": "WebSocket connection timed out",
+      "errorDetails": {
+        "timeout": 5000
+      },
+      "recommendation": "Implement connection timeouts and retry logic for WebSocket connections."
+    }
+  ],
+  "implementationRecommendations": {
+    "errorHandler": "Implement centralized error handling class",
+    "userExperience": "Focus on user-friendly error messages",
+    "retryLogic": "Use exponential backoff with jitter",
+    "monitoring": "Log all errors for analysis",
+    "fallbacks": "Provide offline/degraded functionality"
+  }
+}

@@ -36,22 +36,52 @@ export function DocumentDropdown({ onDocumentSelect, onClose }: DocumentDropdown
   const [editedTitle, setEditedTitle] = React.useState("");
   const [deleteDialogOpen, setDeleteDialogOpen] = React.useState(false);
   const [documentToDelete, setDocumentToDelete] = React.useState<Document | null>(null);
+  
+  // Enhanced features from sidebar
+  const [sortBy, setSortBy] = React.useState<'title' | 'updatedAt' | 'wordCount'>('updatedAt');
+  const [sortDirection, setSortDirection] = React.useState<'asc' | 'desc'>('desc');
+  const [showFavoritesOnly, setShowFavoritesOnly] = React.useState(false);
 
-  // Filter documents (show recent 10 by default, all when searching)
-  const filteredDocuments = React.useMemo(() => {
+  // Filter, sort and paginate documents with enhanced features
+  const filteredAndSortedDocuments = React.useMemo(() => {
     let filtered = documents.filter(doc => !doc.isArchived);
     
+    // Apply search filter
     if (searchQuery.trim()) {
       filtered = searchDocuments(searchQuery);
-    } else {
-      // Show most recent 10 documents when not searching
-      filtered = [...filtered]
-        .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-        .slice(0, 10);
+    }
+    
+    // Apply favorites filter
+    if (showFavoritesOnly) {
+      filtered = filtered.filter(doc => doc.isFavorite);
+    }
+    
+    // Apply sorting
+    filtered = [...filtered].sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case "title":
+          comparison = a.title.localeCompare(b.title);
+          break;
+        case "updatedAt":
+          comparison = new Date(a.updatedAt).getTime() - new Date(b.updatedAt).getTime();
+          break;
+        case "wordCount":
+          comparison = (a.stats?.wordCount || 0) - (b.stats?.wordCount || 0);
+          break;
+        default:
+          comparison = 0;
+      }
+      return sortDirection === "asc" ? comparison : -comparison;
+    });
+    
+    // Show recent 10 when not searching, all when searching
+    if (!searchQuery.trim() && !showFavoritesOnly) {
+      filtered = filtered.slice(0, 10);
     }
     
     return filtered;
-  }, [documents, searchQuery, searchDocuments]);
+  }, [documents, searchQuery, sortBy, sortDirection, showFavoritesOnly, searchDocuments]);
 
   // Handle document selection
   const handleDocumentClick = React.useCallback((document: Document) => {
@@ -221,15 +251,71 @@ export function DocumentDropdown({ onDocumentSelect, onClose }: DocumentDropdown
             </button>
           )}
         </div>
+        
+        {/* Enhanced Controls from Sidebar */}
+        <div className="px-3 pb-2 space-y-2">
+          {/* Sort Controls */}
+          <div className="flex items-center justify-between text-xs">
+            <span className="text-muted-foreground">Sort by:</span>
+            <div className="flex gap-1">
+              <Button
+                variant={sortBy === "updatedAt" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSortBy("updatedAt")}
+                className="h-6 px-2 text-xs"
+              >
+                Recent
+              </Button>
+              <Button
+                variant={sortBy === "title" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSortBy("title")}
+                className="h-6 px-2 text-xs"
+              >
+                A-Z
+              </Button>
+              <Button
+                variant={sortBy === "wordCount" ? "secondary" : "ghost"}
+                size="sm"
+                onClick={() => setSortBy("wordCount")}
+                className="h-6 px-2 text-xs"
+              >
+                Words
+              </Button>
+            </div>
+          </div>
+          
+          {/* Favorites Filter */}
+          <div className="flex items-center justify-between">
+            <Button
+              variant={showFavoritesOnly ? "secondary" : "ghost"}
+              size="sm"
+              onClick={() => setShowFavoritesOnly(!showFavoritesOnly)}
+              className={cn(
+                "flex items-center gap-1 h-6 px-2 text-xs transition-all",
+                showFavoritesOnly && "bg-red-50 text-red-700 hover:bg-red-100 dark:bg-red-950 dark:text-red-300"
+              )}
+            >
+              <Heart className={cn("w-3 h-3", showFavoritesOnly && "fill-red-500 text-red-500")} />
+              Favorites Only
+              {showFavoritesOnly && (
+                <span className="ml-1 bg-red-100 text-red-800 px-1 py-0.5 rounded text-xs dark:bg-red-900 dark:text-red-200">
+                  {documents.filter(doc => doc.isFavorite && !doc.isArchived).length}
+                </span>
+              )}
+            </Button>
+          </div>
+        </div>
       </div>
 
       {/* Document List */}
       <div className="max-h-80 overflow-y-auto">
-        {filteredDocuments.length === 0 ? (
+        {filteredAndSortedDocuments.length === 0 ? (
           <div className="p-6 text-center">
             <FileText className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
             <p className="text-sm text-muted-foreground">
-              {searchQuery ? "No documents match your search" : "No documents yet"}
+              {searchQuery ? "No documents match your search" : 
+               showFavoritesOnly ? "No favorite documents yet" : "No documents yet"}
             </p>
             {!searchQuery && (
               <Button onClick={handleCreateDocument} size="sm" className="mt-2">
@@ -240,7 +326,7 @@ export function DocumentDropdown({ onDocumentSelect, onClose }: DocumentDropdown
           </div>
         ) : (
           <div className="p-1">
-            {filteredDocuments.map((document) => (
+            {filteredAndSortedDocuments.map((document) => (
               <div
                 key={document.id}
                 className={cn(
@@ -359,7 +445,7 @@ export function DocumentDropdown({ onDocumentSelect, onClose }: DocumentDropdown
       </div>
 
       {/* Footer */}
-      {!searchQuery && filteredDocuments.length === 10 && documents.filter(doc => !doc.isArchived).length > 10 && (
+      {!searchQuery && !showFavoritesOnly && filteredAndSortedDocuments.length === 10 && documents.filter(doc => !doc.isArchived).length > 10 && (
         <div className="p-2 border-t border-border">
           <button
             onClick={onClose}

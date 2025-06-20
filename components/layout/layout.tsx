@@ -5,7 +5,6 @@ import { cn } from "@/lib/utils";
 import { Header } from "./header";
 import { Sidebar } from "./sidebar";
 import { useKeyboardShortcuts } from "@/hooks/use-keyboard-shortcuts";
-import { useDocumentStore } from "@/stores/document-store";
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -16,14 +15,6 @@ interface LayoutProps {
 export function Layout({ children, className, rightPanel }: LayoutProps) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = React.useState(false);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = React.useState(false);
-  const [searchQuery, setSearchQuery] = React.useState("");
-  
-  // Get document store functions for keyboard shortcuts
-  const { 
-    createDocument, 
-    activeDocument,
-    updateDocumentContent 
-  } = useDocumentStore();
 
   // Suggestions panel now handled in page.tsx
 
@@ -41,34 +32,27 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
 
   // Custom save handler for keyboard shortcuts
   const handleSave = React.useCallback(async () => {
-    if (activeDocument) {
-      console.log('💾 Force save triggered:', activeDocument.title);
-      // The auto-save system will handle this, but we can add visual feedback
-      
-      // Optional: Show a brief "Saved" indicator
-      const savedIndicator = document.createElement('div');
-      savedIndicator.textContent = '✓ Saved';
-      savedIndicator.className = 'fixed top-20 right-6 bg-primary text-primary-foreground px-3 py-1 rounded-md text-sm font-medium z-50 animate-in fade-in slide-in-from-top-2 duration-200';
-      document.body.appendChild(savedIndicator);
-      
-      setTimeout(() => {
-        if (savedIndicator.parentNode) {
-          savedIndicator.remove();
-        }
-      }, 2000);
-    }
-  }, [activeDocument]);
+    console.log('💾 Force save triggered (auto-save handles document persistence)');
+    // The auto-save system will handle this, but we can add visual feedback
+    
+    // Optional: Show a brief "Saved" indicator
+    const savedIndicator = document.createElement('div');
+    savedIndicator.textContent = '✓ Saved';
+    savedIndicator.className = 'fixed top-20 right-6 bg-primary text-primary-foreground px-3 py-1 rounded-md text-sm font-medium z-50 animate-in fade-in slide-in-from-top-2 duration-200';
+    document.body.appendChild(savedIndicator);
+    
+    setTimeout(() => {
+      if (savedIndicator.parentNode) {
+        savedIndicator.remove();
+      }
+    }, 2000);
+  }, []);
 
-  // Custom new document handler
+  // Custom new document handler - simplified without document creation
   const handleNewDocument = React.useCallback(async () => {
-    try {
-      const newDoc = await createDocument();
-      console.log('📝 New document created via keyboard shortcut:', newDoc.title);
-      closeMobileSidebar(); // Close mobile sidebar if open
-    } catch (error) {
-      console.error('❌ Failed to create document via keyboard shortcut:', error);
-    }
-  }, [createDocument]);
+    console.log('📝 New document shortcut triggered (handled by header dropdown)');
+    closeMobileSidebar(); // Close mobile sidebar if open
+  }, []);
 
   // Grammar suggestion handling moved to page.tsx
 
@@ -95,13 +79,7 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
       {/* Header - Fixed across all columns */}
       <Header
         onMobileMenuToggle={toggleMobileSidebar}
-        searchQuery={searchQuery}
-        onSearchChange={setSearchQuery}
-        onDocumentSelect={(docId) => {
-          // Handle document selection from header dropdown
-          console.log('📄 Document selected from header dropdown:', docId);
-          closeMobileSidebar(); // Close mobile sidebar if open
-        }}
+        onDocumentSelect={() => closeMobileSidebar()}
         className="fixed top-0 left-0 right-0 z-40 border-b border-border/40 bg-background/80 backdrop-blur-xl supports-[backdrop-filter]:bg-background/60"
       />
 
@@ -119,8 +97,6 @@ export function Layout({ children, className, rightPanel }: LayoutProps) {
             onToggle={toggleSidebar}
             isMobileOpen={isMobileSidebarOpen}
             onMobileClose={closeMobileSidebar}
-            searchQuery={searchQuery}
-            className=""
           />
         </div>
 
