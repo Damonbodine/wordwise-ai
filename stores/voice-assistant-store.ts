@@ -45,6 +45,13 @@ export interface ConversationSession {
   duration?: number;
 }
 
+export interface VoiceSuggestion {
+  type: 'improvement' | 'structure' | 'clarity' | 'style';
+  title: string;
+  description: string;
+  priority: 'high' | 'medium' | 'low';
+}
+
 export interface VoiceMetrics {
   totalConversations: number;
   totalDuration: number;
@@ -75,6 +82,7 @@ interface VoiceAssistantStore {
   messages: VoiceMessage[];
   documentContext: VoiceContext | null;
   conversationSummary: string | null;
+  conversationSuggestions: VoiceSuggestion[] | null;
   
   // Audio state
   audioPermission: 'granted' | 'denied' | 'prompt' | 'unknown';
@@ -203,6 +211,7 @@ export const useVoiceAssistantStore = create<VoiceAssistantStore>()(
       messages: [],
       documentContext: null,
       conversationSummary: null,
+      conversationSuggestions: null,
       
       audioPermission: 'unknown',
       microphoneLevel: 0,
@@ -489,6 +498,11 @@ export const useVoiceAssistantStore = create<VoiceAssistantStore>()(
       setConversationSummary: (summary) => {
         set({ conversationSummary: summary });
         console.log('[VOICE STORE] Conversation summary set:', summary.substring(0, 100) + '...');
+      },
+
+      setConversationSuggestions: (suggestions) => {
+        set({ conversationSuggestions: suggestions });
+        console.log('[VOICE STORE] Conversation suggestions set:', suggestions?.length || 0, 'suggestions');
       },
 
       // Context Management

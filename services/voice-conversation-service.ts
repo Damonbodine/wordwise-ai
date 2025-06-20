@@ -73,6 +73,13 @@ export class VoiceConversationService {
         await this.initialize();
       }
       
+      // Reset all conversation flags for new session
+      this.conversationEnded = false;
+      this.isEnding = false;
+      
+      // Clear any leftover audio sources
+      this.activeAudioSources = [];
+      
       // Conversation session started
       
       // Send greeting message
@@ -96,9 +103,33 @@ export class VoiceConversationService {
   }
 
   async endConversation(): Promise<void> {
+    // Prevent multiple simultaneous end calls
+    if (this.isEnding) {
+      console.log('[CONVERSATION SERVICE] Already ending conversation, ignoring duplicate call');
+      return;
+    }
+    
     try {
-      // Stop Web Speech API
+      this.isEnding = true;
+      
+      // Mark conversation as ended to prevent audio chunk processing
+      this.conversationEnded = true;
+      
+      // Stop all active audio sources
+      this.activeAudioSources.forEach(source => {
+        try {
+          source.stop();
+          source.disconnect();
+        } catch (error) {
+          // Source might already be stopped
+        }
+      });
+      this.activeAudioSources = [];
+      
+      // Stop Web Speech API without auto-restart
       if (this.speechRecognition) {
+        // Remove the onend handler to prevent auto-restart
+        this.speechRecognition.onend = null;
         this.speechRecognition.stop();
         this.speechRecognition = null;
       }
@@ -118,13 +149,25 @@ export class VoiceConversationService {
     } catch (error) {
       console.error('[CONVERSATION SERVICE] Failed to end conversation:', error);
       this.onError?.(error as Error);
+    } finally {
+      // Reset ending flag so new conversations can start
+      this.isEnding = false;
     }
   }
 
   // Use Web Speech API for transcription (much simpler and reliable)
   private speechRecognition: any = null;
+  private conversationEnded = false;
+  private activeAudioSources: AudioBufferSourceNode[] = [];
+  private isEnding = false;
   
   sendAudioChunk(chunk: AudioChunk): void {
+    // Don't process audio chunks if conversation has ended
+    if (this.conversationEnded) {
+      console.log('[CONVERSATION SERVICE] Ignoring audio chunk - conversation ended');
+      return;
+    }
+    
     // Start Web Speech API recognition if not already running
     if (!this.speechRecognition) {
       this.startWebSpeechRecognition();
@@ -324,9 +367,10 @@ export class VoiceConversationService {
 
       const { suggestions, summary } = await response.json();
       
-      // Store conversation summary
-      const { setConversationSummary } = useVoiceAssistantStore.getState();
+      // Store conversation summary and suggestions
+      const { setConversationSummary, setConversationSuggestions } = useVoiceAssistantStore.getState();
       setConversationSummary(summary);
+      setConversationSuggestions(suggestions);
       
       console.log('[CONVERSATION SERVICE] Conversation analysis complete:', {
         suggestionsCount: suggestions?.length || 0,
@@ -491,6 +535,17 @@ Provide relevant writing suggestions based on this document content.`;
       const source = this.audioContext.createBufferSource();
       source.buffer = audioData;
       source.connect(this.audioContext.destination);
+      
+      // Track this audio source so we can stop it if needed
+      this.activeAudioSources.push(source);
+      
+      // Remove from tracking when it ends naturally
+      source.onended = () => {
+        const index = this.activeAudioSources.indexOf(source);
+        if (index > -1) {
+          this.activeAudioSources.splice(index, 1);
+        }
+      };
       
       this.onEvent?.({
         type: 'ai_response_start',
