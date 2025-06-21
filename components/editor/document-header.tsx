@@ -352,16 +352,6 @@ export function DocumentHeader({ className }: DocumentHeaderProps) {
           </Button>
         </KeyboardShortcutsTooltip>
 
-        {/* Settings Dropdown Placeholder */}
-        <Button
-          size="sm"
-          variant="ghost"
-          className="h-8 w-8 p-0"
-          title="Document settings (coming soon)"
-          disabled
-        >
-          <Settings className="w-4 h-4" />
-        </Button>
       </div>
     </div>
   );
