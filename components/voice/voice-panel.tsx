@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { useVoiceAssistantStore } from "@/stores/voice-assistant-store";
 import { useVoiceRecording } from "@/hooks/use-voice-recording";
 import { useDocumentStore } from "@/stores/document-store";
+import { useGrammarStore } from "@/stores/grammar-store";
 import { VoiceConversationService } from "@/services/voice-conversation-service";
 
 interface VoicePanelProps {
@@ -38,6 +39,9 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
 
   // Document context
   const { activeDocument } = useDocumentStore();
+  
+  // Grammar analysis context
+  const { issues, scores, isAnalyzing } = useGrammarStore();
 
   // Conversation service ref
   const conversationServiceRef = React.useRef<VoiceConversationService | null>(null);
@@ -182,6 +186,138 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
     return `${minutes}:${remainingSeconds.toString().padStart(2, '0')}`;
   };
 
+  // Document analysis helpers
+  const getDocumentProgress = () => {
+    if (!activeDocument) return null;
+    
+    const wordCount = activeDocument.stats.wordCount;
+    const estimatedTarget = 500; // Default target, could be made configurable
+    const progress = Math.min((wordCount / estimatedTarget) * 100, 100);
+    
+    return {
+      current: wordCount,
+      target: estimatedTarget,
+      percentage: progress,
+      isComplete: progress >= 100
+    };
+  };
+
+  const getWritingVelocity = () => {
+    if (!activeDocument?.updatedAt) return null;
+    
+    const hoursAgo = (Date.now() - new Date(activeDocument.updatedAt).getTime()) / (1000 * 60 * 60);
+    if (hoursAgo > 24) return null; // Only show recent velocity
+    
+    const wordsPerHour = hoursAgo > 0 ? Math.round(activeDocument.stats.wordCount / hoursAgo) : 0;
+    return wordsPerHour;
+  };
+
+  const getDocumentType = () => {
+    if (!activeDocument) return 'document';
+    
+    // Simple heuristics for document type detection
+    const title = activeDocument.title.toLowerCase();
+    const wordCount = activeDocument.stats.wordCount;
+    
+    if (title.includes('email') || title.includes('letter')) return 'document';
+    if (title.includes('essay') || title.includes('paper')) return 'essay';
+    if (title.includes('report') || title.includes('analysis')) return 'report';
+    if (title.includes('story') || title.includes('creative')) return 'creative';
+    if (wordCount < 200) return 'notes';
+    if (wordCount > 1000) return 'long-form';
+    
+    return 'document';
+  };
+
+  const getReadingTime = () => {
+    if (!activeDocument) return 0;
+    return Math.ceil(activeDocument.stats.wordCount / 200); // 200 WPM average
+  };
+
+  const getGrammarSummary = () => {
+    const activeIssues = issues.length; // issues array already contains only visible (non-resolved) issues
+    const overallScore = scores.overall;
+    
+    return {
+      issueCount: activeIssues,
+      overallScore,
+      hasIssues: activeIssues > 0,
+      scoreColor: overallScore >= 90 ? 'text-green-600' : 
+                 overallScore >= 70 ? 'text-yellow-600' : 'text-red-600'
+    };
+  };
+
+  const getConversationStarters = () => {
+    if (!activeDocument) return [];
+    
+    const grammarSummary = getGrammarSummary();
+    const progress = getDocumentProgress();
+    const docType = getDocumentType();
+    const starters = [];
+
+    // Priority suggestions based on document state
+    if (grammarSummary.hasIssues) {
+      starters.push({
+        icon: "✏️",
+        title: "Review Grammar & Style",
+        description: `Let's address ${grammarSummary.issueCount} suggestions to improve clarity`,
+        priority: "high",
+        context: "grammar_review"
+      });
+    }
+
+    if (progress && progress.percentage < 50) {
+      starters.push({
+        icon: "📝",
+        title: "Develop Your Ideas",
+        description: `Let's expand on your ${docType} and build stronger arguments`,
+        priority: "high", 
+        context: "content_development"
+      });
+    }
+
+    // Document-specific suggestions
+    if (docType === 'essay' || docType === 'report') {
+      starters.push({
+        icon: "🏗️",
+        title: "Strengthen Structure",
+        description: "Let's discuss organization, transitions, and logical flow",
+        priority: "medium",
+        context: "structure"
+      });
+    }
+
+    if (activeDocument?.title.toLowerCase().includes('email') || activeDocument?.title.toLowerCase().includes('letter')) {
+      starters.push({
+        icon: "🎯",
+        title: "Perfect Your Tone",
+        description: "Let's ensure your message matches your intended audience",
+        priority: "medium",
+        context: "tone_audience"
+      });
+    }
+
+    // General coaching options
+    starters.push(
+      {
+        icon: "💡",
+        title: "Brainstorm Ideas",
+        description: "Stuck? Let's explore new angles and perspectives",
+        priority: "low",
+        context: "brainstorming"
+      },
+      {
+        icon: "🔍",
+        title: "Final Review",
+        description: "Ready to polish? Let's do a comprehensive review",
+        priority: progress?.percentage > 80 ? "medium" : "low",
+        context: "final_review"
+      }
+    );
+
+    return starters.slice(0, 4); // Show top 4 suggestions
+  };
+
   // Connection status indicator
   const getConnectionStatus = () => {
     const allServices = Object.values(connectionStatus);
@@ -197,24 +333,66 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
   const connectionInfo = getConnectionStatus();
 
   if (isCollapsed) {
+    const grammarSummary = getGrammarSummary();
+    
     return (
-      <div className={cn("flex flex-col items-center gap-2 p-2", className)}>
-        {/* Collapsed view - just icon and status */}
+      <div className={cn("flex flex-col items-center gap-2 p-3", className)}>
+        {/* Enhanced Collapsed Coach Avatar */}
         <div className="relative">
-          <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center">
-            🎤
+          <div className={cn(
+            "w-10 h-10 rounded-full flex items-center justify-center transition-all duration-300",
+            currentSession?.status === 'active' ? "bg-green-100 animate-pulse" : "bg-blue-100",
+            grammarSummary.hasIssues ? "ring-2 ring-orange-300" : ""
+          )}>
+            <span className="text-lg">
+              {currentSession?.status === 'active' ? "🎯" : 
+               connectionInfo.status === 'connected' ? "🤖" : 
+               connectionInfo.status === 'error' ? "😕" : "💭"}
+            </span>
           </div>
-          {/* Connection status dot */}
+          
+          {/* Multi-layered Status Indicators */}
           <div 
             className={cn(
-              "absolute -top-1 -right-1 w-3 h-3 rounded-full",
-              connectionInfo.color
+              "absolute -top-1 -right-1 w-3 h-3 rounded-full transition-all duration-300",
+              connectionInfo.color,
+              currentSession?.status === 'active' && "animate-pulse"
             )}
+            title={`Connection: ${connectionInfo.status}`}
           />
+          
+          {/* Grammar Issues Indicator */}
+          {grammarSummary.hasIssues && !currentSession && (
+            <div 
+              className="absolute -bottom-1 -left-1 w-4 h-4 bg-orange-500 rounded-full flex items-center justify-center text-xs text-white font-bold"
+              title={`${grammarSummary.issueCount} grammar suggestions`}
+            >
+              {grammarSummary.issueCount}
+            </div>
+          )}
         </div>
         
+        {/* Activity Indicators */}
         {recordingState.isRecording && (
-          <div className="w-6 h-1 bg-red-500 rounded-full animate-pulse" />
+          <div className="flex flex-col items-center gap-1">
+            <div className="w-8 h-1 bg-red-500 rounded-full animate-pulse" />
+            <div className="text-xs text-red-600 font-medium">Live</div>
+          </div>
+        )}
+        
+        {/* Quick Stats */}
+        {activeDocument && !currentSession && (
+          <div className="text-center">
+            <div className="text-xs font-medium text-blue-700">
+              {grammarSummary.overallScore}%
+            </div>
+            <div className="text-xs text-gray-500">Score</div>
+          </div>
+        )}
+        
+        {/* Pulsing "Ready" indicator when available */}
+        {!currentSession && activeDocument && connectionInfo.status === 'connected' && (
+          <div className="w-2 h-2 bg-blue-400 rounded-full animate-ping opacity-75" />
         )}
       </div>
     );
@@ -222,27 +400,51 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
-      {/* Header */}
-      <div className="flex items-center justify-between p-4 border-b">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between p-3 border-b">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center w-6 h-6 rounded-md bg-primary/10 text-primary">
-            🎤
+          {/* Compact Coach Avatar */}
+          <div className={cn(
+            "flex items-center justify-center w-6 h-6 rounded-full transition-all duration-300",
+            currentSession?.status === 'active' ? "bg-green-100" : "bg-blue-100"
+          )}>
+            <span className="text-sm">
+              {currentSession?.status === 'active' ? "🎯" : 
+               connectionInfo.status === 'connected' ? "🤖" : 
+               connectionInfo.status === 'error' ? "😕" : "💭"}
+            </span>
           </div>
-          <div className="flex flex-col">
-            <h2 className="text-lg font-semibold leading-none">Voice Assistant</h2>
-            <div className="flex items-center gap-2 mt-0.5">
-              <span className="text-xs text-muted-foreground">Writing Coach</span>
-              <div 
-                className={cn(
-                  "w-2 h-2 rounded-full",
-                  connectionInfo.color
-                )}
-                title={`Status: ${connectionInfo.status}`}
-              />
-            </div>
-          </div>
+          
+          <h2 className="text-lg font-bold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">
+            AI Writing Coach
+          </h2>
+          
+          {/* Inline Status Indicator */}
+          <div 
+            className={cn(
+              "w-2 h-2 rounded-full transition-all duration-300",
+              connectionInfo.color,
+              currentSession?.status === 'active' && "animate-pulse"
+            )}
+            title={`Status: ${connectionInfo.status}`}
+          />
         </div>
         
+        {/* Quick Stats Badge */}
+        {activeDocument && (
+          <Badge variant="outline" className="text-xs bg-white/80">
+            {(() => {
+              const grammarSummary = getGrammarSummary();
+              if (currentSession?.status === 'active') {
+                return `Session Active`;
+              } else if (grammarSummary.hasIssues) {
+                return `${grammarSummary.issueCount} suggestions`;
+              } else {
+                return `${grammarSummary.overallScore}% score`;
+              }
+            })()}
+          </Badge>
+        )}
       </div>
 
       {/* Error Display */}
@@ -266,14 +468,59 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
 
       {/* Main Content */}
       <div className="flex-1 flex flex-col p-4 gap-4">
-        {/* Document Context */}
-        {activeDocument && (
-          <Card className="p-3">
-            <div className="text-sm text-muted-foreground mb-1">Current Document</div>
-            <div className="font-medium text-sm">{activeDocument.title}</div>
-            <div className="text-xs text-muted-foreground">
-              {activeDocument.stats.wordCount} words
+        {/* Coach Capabilities & Coaching Areas */}
+        {activeDocument && !currentSession && (
+          <Card className="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 border-blue-200">
+            <div className="text-sm font-medium text-blue-900 mb-3">Ready to help with:</div>
+            <div className="grid grid-cols-2 gap-2 mb-4">
+              {(() => {
+                const grammarSummary = getGrammarSummary();
+                const progress = getDocumentProgress();
+                const capabilities = [];
+
+                // Prioritize based on document state
+                if (grammarSummary.hasIssues) {
+                  capabilities.push({ 
+                    icon: "✏️", 
+                    text: "Grammar & Style"
+                  });
+                }
+
+                if (progress && !progress.isComplete) {
+                  capabilities.push({ 
+                    icon: "📝", 
+                    text: "Structure & Flow"
+                  });
+                }
+
+                // Always show these
+                capabilities.push(
+                  { icon: "🎯", text: "Clarity & Focus" },
+                  { icon: "💡", text: "Ideas & Research" },
+                  { icon: "🔍", text: "Audience & Tone" },
+                  { icon: "✨", text: "Polish & Refine" }
+                );
+
+                return capabilities.slice(0, 6).map((capability, index) => (
+                  <div 
+                    key={index} 
+                    className="flex items-center gap-2 p-2 rounded-lg text-xs bg-white/60 text-blue-700"
+                  >
+                    <span className="text-sm">{capability.icon}</span>
+                    <span className="font-medium">{capability.text}</span>
+                  </div>
+                ));
+              })()}
             </div>
+            
+            {/* Single Action Button */}
+            <Button
+              onClick={handleStartConversation}
+              className="w-full"
+              disabled={!isInitialized || !recordingState.isSupported || isEnding}
+            >
+              Start a coaching call
+            </Button>
           </Card>
         )}
 
@@ -293,48 +540,48 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
           </Card>
         )}
 
-        {/* Recording Controls */}
-        {recordingState.hasPermission && (
-          <div className="space-y-3">
-            {/* Main Recording Button */}
-            <div className="text-center">
-              {(currentSession?.status === 'active' && !isEnding) ? (
-                <Button
-                  onClick={handleEndConversation}
-                  variant="destructive"
-                  size="lg"
-                  className="w-full"
-                  disabled={isEnding}
-                >
-                  {isEnding ? "Ending..." : "End Conversation"}
-                </Button>
-              ) : (
-                <Button
-                  onClick={handleStartConversation}
-                  size="lg"
-                  className="w-full"
-                  disabled={!isInitialized || !recordingState.isSupported || isEnding}
-                >
-                  Start Voice Chat
-                </Button>
-              )}
-            </div>
+        {/* Session Controls */}
+        {recordingState.hasPermission && currentSession?.status === 'active' && !isEnding && (
+          <div className="text-center">
+            <Button
+              onClick={handleEndConversation}
+              variant="destructive"
+              size="lg"
+              className="w-full"
+              disabled={isEnding}
+            >
+              {isEnding ? "Ending..." : "End Conversation"}
+            </Button>
+          </div>
+        )}
 
-            {/* Recording Controls */}
-            {currentSession?.status === 'active' && (
-              <div className="flex items-center justify-center gap-2">
-                <Button
-                  onClick={handleToggleRecording}
-                  variant={recordingState.isRecording ? "secondary" : "primary"}
-                  size="sm"
-                >
-                  {recordingState.isRecording ? "Pause" : "Resume"}
-                </Button>
-                
-                {recordingState.isPaused && (
-                  <Badge variant="secondary">Paused</Badge>
-                )}
-              </div>
+        {/* Fallback for no document */}
+        {recordingState.hasPermission && !activeDocument && !currentSession && (
+          <div className="text-center">
+            <Button
+              onClick={handleStartConversation}
+              size="lg"
+              className="w-full"
+              disabled={!isInitialized || !recordingState.isSupported || isEnding}
+            >
+              Start Voice Chat
+            </Button>
+          </div>
+        )}
+
+        {/* Recording Controls */}
+        {currentSession?.status === 'active' && (
+          <div className="flex items-center justify-center gap-2">
+            <Button
+              onClick={handleToggleRecording}
+              variant={recordingState.isRecording ? "secondary" : "primary"}
+              size="sm"
+            >
+              {recordingState.isRecording ? "Pause" : "Resume"}
+            </Button>
+            
+            {recordingState.isPaused && (
+              <Badge variant="secondary">Paused</Badge>
             )}
           </div>
         )}
@@ -395,63 +642,71 @@ export function VoicePanel({ className, isCollapsed = false }: VoicePanelProps) 
         )}
 
 
-        {/* Help Text */}
-        {!currentSession && !error && (
-          <div className="text-center text-sm text-muted-foreground">
-            {!activeDocument ? (
-              "Open a document to start a writing conversation"
-            ) : (
-              "Click 'Start Voice Chat' to begin talking with your AI writing coach"
-            )}
-          </div>
-        )}
 
-        {/* Conversation Suggestions */}
+        {/* Enhanced Recent Insights Panel */}
         {conversationSuggestions && conversationSuggestions.length > 0 && (
-          <div className="mt-6 space-y-3">
-            <div className="text-sm font-medium text-foreground">
-              Writing Suggestions from Last Conversation
+          <Card className="p-4 bg-gradient-to-br from-green-50 to-blue-50 border-green-200">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">💡</span>
+              <div className="text-sm font-semibold text-green-900">
+                Recent Coaching Insights
+              </div>
+              <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+                {conversationSuggestions.length} suggestions
+              </Badge>
             </div>
+            
             <div className="space-y-3">
               {conversationSuggestions.map((suggestion, index) => (
-                <Card key={index} className="p-3 bg-blue-50 border-blue-200">
+                <div key={index} className="bg-white/70 rounded-lg p-3 border border-green-200/50">
                   <div className="flex items-start gap-3">
                     <div className={cn(
-                      "w-2 h-2 rounded-full mt-2 flex-shrink-0",
-                      suggestion.priority === 'high' ? 'bg-red-500' :
-                      suggestion.priority === 'medium' ? 'bg-yellow-500' : 'bg-green-500'
+                      "w-3 h-3 rounded-full mt-1.5 flex-shrink-0",
+                      suggestion.priority === 'high' ? 'bg-red-400' :
+                      suggestion.priority === 'medium' ? 'bg-yellow-400' : 'bg-green-400'
                     )} />
                     <div className="flex-1">
-                      <div className="font-medium text-sm text-blue-900">
+                      <div className="font-medium text-sm text-gray-900">
                         {suggestion.title}
                       </div>
-                      <div className="text-xs text-blue-700 mt-1">
+                      <div className="text-xs text-gray-700 mt-1 leading-relaxed">
                         {suggestion.description}
                       </div>
                       <div className="flex items-center gap-2 mt-2">
                         <Badge 
-                          variant="secondary" 
-                          className="text-xs bg-blue-100 text-blue-800"
+                          variant="outline" 
+                          className="text-xs bg-white/80 border-green-300"
                         >
                           {suggestion.type}
                         </Badge>
-                        <Badge 
-                          variant={
-                            suggestion.priority === 'high' ? 'destructive' :
-                            suggestion.priority === 'medium' ? 'default' : 'secondary'
-                          }
-                          className="text-xs"
-                        >
+                        <span className={cn(
+                          "text-xs font-medium",
+                          suggestion.priority === 'high' ? 'text-red-600' :
+                          suggestion.priority === 'medium' ? 'text-yellow-600' : 'text-green-600'
+                        )}>
                           {suggestion.priority} priority
-                        </Badge>
+                        </span>
                       </div>
                     </div>
                   </div>
-                </Card>
+                </div>
               ))}
             </div>
-          </div>
+            
+            {/* Quick Action */}
+            <div className="mt-3 pt-3 border-t border-green-200">
+              <Button
+                variant="secondary"
+                size="sm"
+                className="w-full text-green-700 border-green-300 hover:bg-green-100"
+                onClick={handleStartConversation}
+              >
+                Continue improving with a new session
+              </Button>
+            </div>
+          </Card>
         )}
+
       </div>
     </div>
   );

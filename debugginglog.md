@@ -122,5 +122,59 @@ This file tracks failed attempts at fixing issues to avoid repeating the same mi
 
 ---
 
+---
+
+## Current Issue: Zustand Grammar Store Syntax Error
+
+### Error Details
+- **Error**: `Expression expected` at line 455 pointing to closing parenthesis
+- **Location**: `stores/grammar-store.ts:455:1`
+- **Root Cause**: Incorrect Zustand store syntax structure causing parser confusion
+
+### Failed Attempts
+
+#### Attempt 1: Adding missing closing brace without understanding structure
+- **Date**: 2025-06-21
+- **Change**: Added closing brace `};` before final closing parentheses
+- **Files**: `stores/grammar-store.ts` line 449
+- **Result**: FAILED - Created syntax error "Expression expected" 
+- **Reason**: Misunderstood Zustand `create()()` double parentheses structure
+- **Lesson**: Must understand Zustand syntax: `create<Type>()(devtools(fn, options))`
+
+#### Attempt 2: Removing extra closing parenthesis without fixing structure
+- **Date**: 2025-06-21
+- **Change**: Tried to remove extra `)` at end but kept wrong structure
+- **Files**: `stores/grammar-store.ts` lines 454-455
+- **Result**: FAILED - Same "Expression expected" error persists
+- **Reason**: Fixed symptom not root cause - devtools function structure still wrong
+- **Lesson**: Need to verify entire Zustand store structure, not just end parentheses
+
+#### Attempt 3: Using sed command to fix syntax
+- **Date**: 2025-06-21
+- **Change**: Used `sed -i '' 's/));$/);/'` to remove extra parenthesis
+- **Files**: `stores/grammar-store.ts` 
+- **Result**: FAILED - Command didn't work as expected, syntax error remained
+- **Reason**: sed didn't match the exact pattern, manual edit needed
+- **Lesson**: Use Edit tool for precise syntax fixes instead of sed commands
+
+#### Attempt 4: Adding missing closing parenthesis for create()() syntax
+- **Date**: 2025-06-21
+- **Change**: Changed `);` to `));` at end assuming create()() needs double closing
+- **Files**: `stores/grammar-store.ts` line 455
+- **Result**: FAILED - Still getting "Declaration or statement expected" on lines 455:1 and 455:2
+- **Reason**: May be misunderstanding Zustand syntax - need to check existing working stores
+- **Lesson**: Verify correct Zustand syntax by examining working examples in codebase
+
+### SUCCESSFUL RESOLUTION
+- **Date**: 2025-06-21
+- **Solution**: Fixed Zustand store structure by correcting return statement
+- **Change**: Changed `}` to `};` on line 449 to properly close the return object
+- **Files**: `stores/grammar-store.ts` lines 448-449
+- **Result**: SUCCESS - Development server starts without syntax errors
+- **Root Cause**: Missing semicolon in return statement within Zustand store function
+- **Lesson**: Zustand stores require proper JavaScript object syntax: `return { ... };` not `return { ... }`
+
+---
+
 ## Note
-This log only tracks FAILED attempts to avoid repeating unsuccessful approaches. Do not assume solutions that worked in one area will work in another.
+This log tracks FAILED attempts to avoid repeating unsuccessful approaches. When successful resolutions are found, they are documented for reference.

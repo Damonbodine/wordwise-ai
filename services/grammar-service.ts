@@ -347,7 +347,7 @@ class SpellingChecker {
     
     console.log('[SPELL CHECK] Browser spell checking words:', words.slice(0, 10), words.length > 10 ? `... and ${words.length - 10} more` : '');
     
-    words.forEach((word) => {
+    words.forEach((word: string) => {
       const lowerWord = word.toLowerCase();
       let wordStart = 0;
       let searchFrom = 0;
